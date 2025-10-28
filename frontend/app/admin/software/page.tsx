@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import AuthGuard from '@/components/AuthGuard'
-import ProjectRegistrationForm from '@/components/ProjectRegistrationForm'
-import ProjectEditForm from '@/components/ProjectEditForm'
-import ProjectList from '@/components/ProjectList'
-import { Project } from '@/components/types'
+import ProjectRegistrationForm from '@/components/admin/software/ProjectRegistrationForm'
+import ProjectEditForm from '@/components/admin/software/ProjectEditForm'
+import ProjectList from '@/components/admin/software/ProjectList'
+import { Project } from '@/types/admin/types'
 
 export default function AdminSoftwarePage() {
   const [user, setUser] = useState<any>(null)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useToast } from '@/lib/context/ToastContext'
-import { Project } from './types'
+import { Project } from '../../../types/admin/types'
 import { ProjectFormData } from './ProjectRegistrationForm'
 
 interface ProjectEditFormProps {

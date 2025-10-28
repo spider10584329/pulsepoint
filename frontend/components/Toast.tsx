@@ -41,17 +41,17 @@ const Toast = ({ toast, onClose }: ToastProps) => {
   }
 
   const getToastStyles = () => {
-    const baseStyles = "relative flex items-start p-4 mb-3 rounded-lg shadow-lg border-l-4 backdrop-blur-sm"
+    const baseStyles = "relative flex items-start p-4 mb-3 rounded-lg shadow-lg "
     
     switch (toast.type) {
       case 'success':
-        return `${baseStyles} bg-green-50/90 border-green-500 text-green-800`
+        return `${baseStyles} bg-[#157538] border-green-500 text-green-800`
       case 'error':
-        return `${baseStyles} bg-red-50/90 border-red-500 text-red-800`
+        return `${baseStyles} bg-[#e93333] border-red-500 text-red-800`
       case 'warning':
-        return `${baseStyles} bg-yellow-50/90 border-yellow-500 text-yellow-800`
+        return `${baseStyles} bg-[#f59e0b] border-yellow-500 text-yellow-800`
       case 'info':
-        return `${baseStyles} bg-blue-50/90 border-blue-500 text-blue-800`
+        return `${baseStyles} bg-[#3b82f6] border-blue-500 text-blue-800`
       default:
         return `${baseStyles} bg-gray-50/90 border-gray-500 text-gray-800`
     }
@@ -60,13 +60,13 @@ const Toast = ({ toast, onClose }: ToastProps) => {
   const getIconStyles = () => {
     switch (toast.type) {
       case 'success':
-        return 'text-green-500'
+        return 'text-white'
       case 'error':
-        return 'text-red-500'
+        return 'text-white'
       case 'warning':
-        return 'text-yellow-500'
+        return 'text-white'
       case 'info':
-        return 'text-blue-500'
+        return 'text-white'
       default:
         return 'text-gray-500'
     }
@@ -83,7 +83,7 @@ const Toast = ({ toast, onClose }: ToastProps) => {
             style={{ width: '32px', height: '32px', filter: 'brightness(0) invert(1)' }}
           />
         )
-      case 'error':
+      default :
         return (
           <img 
             src="/svg/warning.svg" 
@@ -92,26 +92,7 @@ const Toast = ({ toast, onClose }: ToastProps) => {
             style={{ width: '32px', height: '32px', filter: 'brightness(0) invert(1)' }}
           />
         )
-      case 'warning':
-        return (
-          <img 
-            src="/svg/warning.svg" 
-            alt="Warning" 
-            className="w-8 h-8"
-            style={{ width: '32px', height: '32px', filter: 'brightness(0) invert(1)' }}
-          />
-        )
-      case 'info':
-        return (
-          <img 
-            src="/svg/notification.svg" 
-            alt="Info" 
-            className="w-8 h-8"
-            style={{ width: '32px', height: '32px', filter: 'brightness(0) invert(1)' }}
-          />
-        )
-      default:
-        return null
+    
     }
   }
 
@@ -134,8 +115,8 @@ const Toast = ({ toast, onClose }: ToastProps) => {
       <div 
         className={getToastStyles()}
         style={{
-          backgroundColor: toast.type === 'error' ? '#e93333' : '#157538',
-          border: `4px solid ${toast.type === 'error' ? '#e93333' : '#157538'}`,
+          // backgroundColor: toast.type === 'error' ? '#e93333' : '#157538',
+          // border: `4px solid ${toast.type === 'error' ? '#e93333' : '#157538'}`,
           borderRadius: '8px',
           padding: '16px',
           marginBottom: '12px',
@@ -168,11 +149,11 @@ const Toast = ({ toast, onClose }: ToastProps) => {
             {toast.title}
           </h4>
           <p 
-            className="text-sm mt-1 opacity-90"
+            className="text-sm mt-1 opacity-100"
             style={{ 
               fontSize: '14px', 
               marginTop: '4px', 
-              opacity: 0.9, 
+              opacity: 1, 
               color: '#ffffff',
               lineHeight: '1.5',
               wordBreak: 'keep-all'

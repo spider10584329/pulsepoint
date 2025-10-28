@@ -118,6 +118,8 @@ class UserModel(db.Model):
                 'address': x.address,
                 'contact': x.contact,
                 'status': x.status,
+                'role': x.role,
+                'isVerify': x.isVerify,
             }
             
         query_result = db.session.query(
@@ -130,9 +132,11 @@ class UserModel(db.Model):
             UserModel.email,
             UserModel.address,
             UserModel.contact,
-            UserModel.status
+            UserModel.status,
+            UserModel.role,
+            UserModel.isVerify
         ).filter(UserModel.role == 1)
-        
+
         return list(map(lambda x: to_json(x), query_result))
 
     @classmethod
@@ -183,15 +187,40 @@ class UserModel(db.Model):
             db.session.commit()
         except:
             return {'message': 'error'}
+    
+    @classmethod
+    def update_user_details(cls, id, email, firstname, lastname, company, hotelname, role, status, isVerify):
+        try:
+            record = cls.query.get(id)
+            if not record:
+                return {'status': -1, 'message': 'User not found'}
+            
+            record.email = email
+            record.firstname = firstname
+            record.lastname = lastname
+            record.company = company
+            record.hotelname = hotelname
+            record.role = role
+            record.status = status
+            record.isVerify = isVerify
+            db.session.commit()
+            
+            return {'status': 1, 'message': 'User updated successfully'}
+        except Exception as e:
+            return {'status': -1, 'message': f'Error updating user: {str(e)}'}
         
     @classmethod
     def delete_one(cls, id):
         try:
             row_deleted = cls.query.filter_by(id=id).first()
+            if not row_deleted:
+                return {'status': -1, 'message': 'User not found'}
+            
             db.session.delete(row_deleted)
             db.session.commit()
-        except:
-            return {'message': 'error'}
+            return {'status': 1, 'message': 'User deleted successfully'}
+        except Exception as e:
+            return {'status': -1, 'message': f'Error deleting user: {str(e)}'}
         
     @classmethod
     def update_unique_string(cls, id, unique):

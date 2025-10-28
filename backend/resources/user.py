@@ -29,6 +29,8 @@ parser.add_argument('projectId')
 parser.add_argument('uniqueString')
 parser.add_argument('verifyCode')
 parser.add_argument('username')
+parser.add_argument('role')
+parser.add_argument('isVerify')
 
 class UserRegister(Resource):
     def post(self):
@@ -240,6 +242,28 @@ class UpdateUser(Resource):
     def put(self):
         data = parser.parse_args()
         return UserModel.update_one(request.args.get('id'), data['status'])
+
+class UpdateUserDetails(Resource):
+    @jwt_required()
+    def put(self):
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = parser.parse_args()
+        user_id = request.args.get('id')
+        
+        return UserModel.update_user_details(
+            user_id,
+            data['email'],
+            data['firstname'], 
+            data['lastname'],
+            data['company'],
+            data['hotelname'],
+            int(data['role']),
+            int(data['status']),
+            int(data['isVerify'])
+        )
     
 class DeleteUser(Resource):
     @jwt_required()
