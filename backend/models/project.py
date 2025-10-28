@@ -34,23 +34,37 @@ class ProjectModel(db.Model):
         ))
         
     @classmethod
-    def update_one(cls, id, name, description, link, price, mprice):
+    def update_one(cls, id, name, description, link, price, mprice, filename=None):
         try:
             record = cls.query.get(id)
+            if not record:
+                return {'status': -1, 'message': 'Project not found'}
+            
             record.name = name
             record.description = description
             record.website_link = link
             record.price = price
             record.mprice = mprice
+            
+            # Only update filename if a new file was uploaded
+            if filename is not None:
+                record.filename = filename
+            
             db.session.commit()
-        except:
-            return {'message': 'error'}
+            
+            return {'status': 1, 'message': 'Project updated successfully'}
+        except Exception as e:
+            return {'status': -1, 'message': f'Error updating project: {str(e)}'}
         
     @classmethod
     def delete_one(cls, id):
         try:
             row_deleted = cls.query.filter_by(id=id).first()
+            if not row_deleted:
+                return {'status': -1, 'message': 'Project not found'}
+            
             db.session.delete(row_deleted)
             db.session.commit()
-        except:
-            return {'message': 'error'}
+            return {'status': 1, 'message': 'Project deleted successfully'}
+        except Exception as e:
+            return {'status': -1, 'message': f'Error deleting project: {str(e)}'}

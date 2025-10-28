@@ -65,9 +65,47 @@ class ReadAllProject(Resource):
 class UpdateProject(Resource):
     @jwt_required()
     def put(self):
-        data = parser.parse_args()
-        
-        return ProjectModel.update_one(request.args.get('id'), data['name'], data['description'], data['websiteLink'], data['price'], data['mprice'])
+        try:
+            file = None
+            filename = None
+            
+            # Check if request contains multipart form data (with file)
+            if request.content_type and 'multipart/form-data' in request.content_type:
+                # Handle form data with file upload
+                if 'file' in request.files:
+                    file = request.files['file']
+                    if file and file.filename:
+                        filename = file.filename
+                        file.save(os.path.join('uploads', filename))
+                
+                project_id = request.form.get('id')
+                name = request.form.get('name')
+                description = request.form.get('description')
+                websiteLink = request.form.get('website')
+                price = request.form.get('price')
+                mprice = request.form.get('mprice')
+                
+            else:
+                # Handle JSON data (no file upload)
+                data = request.get_json()
+                
+                if not data:
+                    return {'error': 'No data provided', 'status': -1}, 400
+                
+                project_id = data.get('id')
+                name = data.get('name')
+                description = data.get('description')
+                websiteLink = data.get('website')
+                price = data.get('price')
+                mprice = data.get('mprice')
+            
+            if not project_id:
+                return {'error': 'Project ID is required', 'status': -1}, 400      
+                  
+            return ProjectModel.update_one(project_id, name, description, websiteLink, price, mprice, filename)
+            
+        except Exception as e:
+            return {'error': str(e), 'status': -1}, 400
     
 class DeleteProject(Resource):
     @jwt_required()

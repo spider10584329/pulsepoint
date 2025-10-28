@@ -36,25 +36,31 @@ class AppliedProjectModel(db.Model):
     @classmethod
     def return_all(cls):
         def to_json(x):
-            return {
+           return {
                 'id': x.id,
-                'username': x.firstname +" " + x.lastname,
+                'userId': getattr(x, 'userId', None),
+                'projectId': getattr(x, 'projectId', None),
+                'username': f"{x.firstname} {x.lastname}",
                 'projectName': x.projectName,
                 'applyDate': x.apply_date,
                 'isApply': x.is_apply,
                 'purchaseDate': x.purchase_date,
-                'periodicity': x.periodicity
+                'periodicity': x.periodicity,
+                'filename': x.filename
             }
             
         query_result = db.session.query(
             AppliedProjectModel.id,
+            UserModel.id.label('userId'),
+            ProjectModel.id.label('projectId'),
             UserModel.firstname.label('firstname'),
             UserModel.lastname.label('lastname'),
             ProjectModel.name.label('projectName'),
             AppliedProjectModel.apply_date,
             AppliedProjectModel.is_apply,
             AppliedProjectModel.purchase_date,
-            AppliedProjectModel.periodicity
+            AppliedProjectModel.periodicity,
+            ProjectModel.filename.label('filename')
         ).join(UserModel, UserModel.id == AppliedProjectModel.user_id) \
         .join(ProjectModel, ProjectModel.id == AppliedProjectModel.project_id)
         
@@ -85,7 +91,8 @@ class AppliedProjectModel(db.Model):
                 'applyDate': x.apply_date,
                 'isApply': x.is_apply,
                 'purchaseDate': x.purchase_date,
-                'periodicity': x.periodicity
+                'periodicity': x.periodicity,
+                'filename': x.filename
             }
             
         query_result = db.session.query(
@@ -98,7 +105,8 @@ class AppliedProjectModel(db.Model):
             AppliedProjectModel.apply_date,
             AppliedProjectModel.is_apply,
             AppliedProjectModel.purchase_date,
-            AppliedProjectModel.periodicity
+            AppliedProjectModel.periodicity,
+            ProjectModel.filename.label('filename')
         ).join(UserModel, UserModel.id == AppliedProjectModel.user_id) \
         .join(ProjectModel, ProjectModel.id == AppliedProjectModel.project_id) \
         .filter(AppliedProjectModel.user_id == userId)
