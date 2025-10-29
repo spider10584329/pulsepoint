@@ -23,7 +23,8 @@ export default function AdminUserPage() {
     handleEditingUserChange,
     handleCancelEdit,
     handleClearSelection,
-    handleCloseConfirmDialog
+    handleCloseConfirmDialog,
+    refreshAppliedProjects
   } = useUserManagement()
 
   const handleConfigureProject = (projectId: number, userId?: number) => {
@@ -63,7 +64,7 @@ export default function AdminUserPage() {
                 onUserAction={handleUserAction}
               />
             </div>
-            <div className="bg-white rounded-lg shadow p-3 sm:p-4 min-h-[50vh] max-h-[55vh] flex flex-col">
+            <div className="bg-white rounded-lg shadow p-3 sm:p-4 min-h-[50vh] max-h-[55vh] flex flex-col overflow-hidden">
               {editingUser ? (
                 <UserEditForm
                   editingUser={editingUser}
@@ -78,6 +79,7 @@ export default function AdminUserPage() {
                   users={users}
                   onClearSelection={handleClearSelection}
                   onConfigureProject={handleConfigureProject}
+                  onDataUpdate={refreshAppliedProjects}
                 />
               )}
             </div>
@@ -112,6 +114,7 @@ export default function AdminUserPage() {
                 users={users}
                 onClearSelection={handleClearSelection}
                 onConfigureProject={handleConfigureProject}
+                onDataUpdate={refreshAppliedProjects}
               />
             )}
           </div>

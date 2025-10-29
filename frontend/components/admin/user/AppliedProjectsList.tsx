@@ -1,5 +1,8 @@
 'use client'
 
+import { useState } from 'react'
+import SubscriptionManagementPanel from '@/components/admin/user/SubscriptionManagementPanel'
+
 interface User {
   id: number
   email: string
@@ -29,6 +32,7 @@ interface ProjectSubscriber {
   applyDate: string
   isApply: number
   periodicity?: number
+  purchaseDate?: string
 }
 
 interface UniqueProject {
@@ -44,6 +48,7 @@ interface AppliedProjectsListProps {
   users: User[]
   onClearSelection: () => void
   onConfigureProject?: (projectId: number, userId?: number) => void
+  onDataUpdate?: () => void
 }
 
 export default function AppliedProjectsList({ 
@@ -51,8 +56,20 @@ export default function AppliedProjectsList({
   selectedUserId, 
   users, 
   onClearSelection,
-  onConfigureProject
+  onConfigureProject,
+  onDataUpdate
 }: AppliedProjectsListProps) {
+  const [subscriptionPanel, setSubscriptionPanel] = useState<{
+    isActive: boolean
+    projectId: number
+    projectName: string
+    subscribers: ProjectSubscriber[]
+  }>({
+    isActive: false,
+    projectId: 0,
+    projectName: '',
+    subscribers: []
+  })
   
   const getUniqueAppliedProjects = (): UniqueProject[] => {
     const uniqueProjects = new Map<number, UniqueProject>()
@@ -62,12 +79,12 @@ export default function AppliedProjectsList({
           projectId: project.projectId,
           projectName: project.projectName,
           totalSubscribers: 1,
-          subscribers: [{ userId: project.userId, applyDate: project.applyDate, isApply: project.isApply, periodicity: project.periodicity }]
+          subscribers: [{ id: project.id, userId: project.userId, applyDate: project.applyDate, isApply: project.isApply, periodicity: project.periodicity, purchaseDate: project.purchaseDate }]
         })
       } else {
         const existing = uniqueProjects.get(project.projectId)!
         existing.totalSubscribers++
-        existing.subscribers.push({ userId: project.userId, applyDate: project.applyDate, isApply: project.isApply, periodicity: project.periodicity })
+        existing.subscribers.push({ id: project.id, userId: project.userId, applyDate: project.applyDate, isApply: project.isApply, periodicity: project.periodicity, purchaseDate: project.purchaseDate })
       }
     })
     return Array.from(uniqueProjects.values())
@@ -76,6 +93,56 @@ export default function AppliedProjectsList({
   const getUserSpecificProjects = (userId: number) => {  
     const filtered = appliedProjects.filter(project => project.userId === userId)    
     return filtered
+  }
+
+  const handleConfigureClick = (projectId: number, projectName: string, userId?: number) => {
+    // Get all subscribers for this project
+    const projectSubscribers = appliedProjects
+      .filter(project => project.projectId === projectId)
+      .map(project => ({
+        id: project.id, // Include the appliedproject ID for database updates
+        userId: project.userId,
+        applyDate: project.applyDate,
+        isApply: project.isApply,
+        periodicity: project.periodicity,
+        purchaseDate: project.purchaseDate
+      }))
+
+    setSubscriptionPanel({
+      isActive: true,
+      projectId,
+      projectName,
+      subscribers: projectSubscribers
+    })
+
+    // Also call the original onConfigureProject if it exists
+    onConfigureProject?.(projectId, userId)
+  }
+
+  const handleBackToProjects = () => {
+    setSubscriptionPanel(prev => ({ ...prev, isActive: false }))
+  }
+
+  const handleStatusUpdate = () => {
+    // Refresh the data after status update
+    onDataUpdate?.()
+  }
+
+  // If subscription panel is active, show the management panel
+  if (subscriptionPanel.isActive) {
+    return (
+      <div className="h-full flex flex-col min-h-0">
+        <SubscriptionManagementPanel
+          projectId={subscriptionPanel.projectId}
+          projectName={subscriptionPanel.projectName}
+          selectedUserId={selectedUserId}
+          subscribers={subscriptionPanel.subscribers}
+          users={users}
+          onStatusUpdate={handleStatusUpdate}
+          onBack={handleBackToProjects}
+        />
+      </div>
+    )
   }
 
   return (
@@ -174,17 +241,40 @@ export default function AppliedProjectsList({
                       </div>
                       
                       <div className="mt-1 mb-1 flex items-center justify-between">
-                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                          project.isApply === 1 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {project.isApply === 1 ? 'Implemented' : 'Pending'}
-                        </span>
+                        {(() => {
+                          const getProjectStatus = () => {
+                            if (project.isApply === 1) {
+                              return { label: 'Implemented', color: 'bg-green-100 text-green-800' }
+                            }
+                            
+                            // If isApply === 0, check if it's pending or expired
+                            if (project.applyDate && project.purchaseDate) {
+                              const applyDate = new Date(project.applyDate)
+                              const purchaseDate = new Date(project.purchaseDate)
+                              
+                              // If applied before purchase, it means the subscription has expired
+                              if (applyDate < purchaseDate) {
+                                return { label: 'Expired', color: 'bg-red-100 text-red-800' }
+                              }
+                            }
+                            
+                            // Default to pending for other cases
+                            return { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' }
+                          }
+                          
+                          const status = getProjectStatus()
+                          return (
+                            <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${status.color}`}>
+                              {status.label}
+                            </span>
+                          )
+                        })()}
                         
                         {/* Configuration Icon */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            onConfigureProject?.(project.projectId, project.userId)
+                            handleConfigureClick(project.projectId, project.projectName, project.userId)
                           }}
                           className="p-1.5 sm:p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-blue-600 transition-colors"
                           title="Configure Subscription Settings"
@@ -277,7 +367,7 @@ export default function AppliedProjectsList({
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              onConfigureProject?.(project.projectId)
+                              handleConfigureClick(project.projectId, project.projectName)
                             }}
                             className="p-1.5 sm:p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-blue-600 transition-colors"
                             title="Configure Project Settings"

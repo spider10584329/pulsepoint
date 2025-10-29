@@ -45,7 +45,11 @@ class ApplyProject(Resource):
 class UpdateProjectApply(Resource):
     @jwt_required()
     def put(self):
-        data = parser.parse_args()
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = parser.parse_args()
         return AppliedProjectModel.update_one(request.args.get('id'), data['isApply'], data['purchaseDate'], data['periodicity'])
 
 class ReadAllAppliedProject(Resource):

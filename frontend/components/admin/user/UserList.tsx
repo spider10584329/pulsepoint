@@ -47,19 +47,40 @@ export default function UserList({
   const getUserProjectStats = (userId: number) => {
     const userProjects = appliedProjects.filter(project => project.userId === userId)
     
-    // Blue badge: Applied but NOT purchased yet (pending purchases)
-    const appliedButNotPurchased = userProjects.filter(project => 
-      project.applyDate && !project.purchaseDate
-    ).length
+    // Blue badge: Applied but no purchase OR applied after last purchase
+    const pendingApplications = userProjects.filter(project => {
+      if (!project.applyDate) return false
+      
+      // No purchase date at all
+      if (!project.purchaseDate) return true
+      
+      // Apply date is greater than purchase date
+      const applyDate = new Date(project.applyDate)
+      const purchaseDate = new Date(project.purchaseDate)
+      return applyDate > purchaseDate
+    }).length
     
-    // Green badge: Completed purchases (applied AND purchased)
-    const completedPurchases = userProjects.filter(project => 
-      project.applyDate && project.purchaseDate
-    ).length
+    // Green badge: Active paid subscriptions (isApply = 1 AND not in free trial)
+    const activePaidSubscriptions = userProjects.filter(project => {
+      // Must be currently active/approved
+      if (project.isApply !== 1) return false
+      
+      // Must have payment info (not in free trial)
+      if (!project.purchaseDate) return false
+      
+      // Exclude trial indicators: "0", empty strings, or today's date
+      const defaultDate = new Date().toISOString().split('T')[0]
+      const purchaseDate = project.purchaseDate
+      
+      return purchaseDate && 
+             purchaseDate !== "0" && 
+             purchaseDate.trim() !== "" && 
+             purchaseDate !== defaultDate
+    }).length
     
     return { 
-      totalApplied: appliedButNotPurchased, // Blue badge: pending purchases
-      implemented: completedPurchases        // Green badge: completed purchases
+      totalApplied: pendingApplications,    // Blue badge: pending applications
+      implemented: activePaidSubscriptions // Green badge: active paid subscriptions (not trials)
     }
   }
 

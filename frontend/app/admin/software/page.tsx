@@ -53,7 +53,7 @@ export default function AdminSoftwarePage() {
 
   return (
     <AuthGuard requireVerification={true} allowedRoles={[0]}>
-        <div className=" p-2 lg:p-6">
+        <div className=" p-2 lg:p-4">
           <div className="max-w-7xl mx-auto space-y-6">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">

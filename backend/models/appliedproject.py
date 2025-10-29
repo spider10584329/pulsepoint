@@ -26,12 +26,16 @@ class AppliedProjectModel(db.Model):
     def update_one(cls, id, status, purchaseDate, periodicity):
         try:
             record = cls.query.get(id)
-            record.is_apply = status
-            record.purchase_date = purchaseDate
-            record.periodicity = periodicity
-            db.session.commit()
-        except:
-            return {'message': 'error'}
+            if record:
+                record.is_apply = status
+                record.purchase_date = purchaseDate
+                record.periodicity = periodicity
+                db.session.commit()
+                return {'status': 1, 'message': 'Updated successfully'}
+            else:
+                return {'status': 0, 'message': 'Record not found'}
+        except Exception as e:
+            return {'status': -1, 'message': 'Database error', 'error': str(e)}
         
     @classmethod
     def return_all(cls):

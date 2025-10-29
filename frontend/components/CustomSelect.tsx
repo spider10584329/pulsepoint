@@ -127,7 +127,7 @@ export default function CustomSelect({
         onClick={handleToggle}
         disabled={disabled}
         className={`
-          relative w-full bg-white border border-gray-400 rounded-md px-4 py-2 text-left cursor-pointer text-sm
+          relative w-full bg-white border border-gray-400 rounded-md px-4 py-1.5 text-left cursor-pointer text-sm
           hover:border-gray-500 transition-all duration-200
           ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}
           ${isOpen ? 'border-blue-500' : ''}

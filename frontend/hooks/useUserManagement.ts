@@ -268,6 +268,13 @@ export const useUserManagement = () => {
     setSelectedUserId(null)
   }
 
+  const refreshAppliedProjects = async () => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      await fetchAppliedProjects(token)
+    }
+  }
+
   return {
     user,
     isLoading,
@@ -283,6 +290,7 @@ export const useUserManagement = () => {
     handleEditingUserChange,
     handleCancelEdit,
     handleClearSelection,
-    handleCloseConfirmDialog
+    handleCloseConfirmDialog,
+    refreshAppliedProjects
   }
 }

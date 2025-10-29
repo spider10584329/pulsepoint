@@ -22,9 +22,12 @@ export interface AppliedProject {
 }
 
 export interface ProjectSubscriber {
+  id: number // The appliedproject ID (primary key)
   userId: number
   applyDate: string
   isApply: number
+  periodicity?: number
+  purchaseDate?: string
 }
 
 export interface UniqueProject {

@@ -56,14 +56,65 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
     }
   }
 
-  const deleteProject = (projectId: number, projectName: string) => {
-    // Show confirmation dialog
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Delete Project',
-      message: `Are you sure you want to delete "${projectName}"? This action cannot be undone.`,
-      onConfirm: () => performDeleteProject(projectId, projectName)
-    })
+  const checkProjectApplicants = async (projectId: number): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      const response = await fetch('http://localhost:5001/api/apply/project/all', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const appliedProjects = await response.json()      
+        
+        // Check if any applied project matches this project ID
+        const hasApplicants = appliedProjects.some((applied: any) => {
+          return applied.projectId === projectId
+        })
+        return hasApplicants
+      } else {
+        const errorText = await response.text()
+        throw new Error(`Failed to fetch applied projects: ${response.status} - ${errorText}`)
+      }
+    } catch (error) {     
+      throw error
+    }
+  }
+
+  const deleteProject = async (projectId: number, projectName: string) => {
+    setDeletingId(projectId)
+    
+    try {
+      // First check if there are users who have applied for this project
+      const hasApplicants = await checkProjectApplicants(projectId)
+      
+      if (hasApplicants) {
+        setDeletingId(null)
+        showToast('info', 'Project has Subscribers', `"${projectName}" cannot be deleted because there are subscribers who have applied for this project.`)
+        return
+      }
+
+      setDeletingId(null)
+      
+      // Show confirmation dialog if no applicants
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Delete Project',
+        message: `Are you sure you want to delete "${projectName}"? This action cannot be undone.`,
+        onConfirm: () => performDeleteProject(projectId, projectName)
+      })
+    } catch (error) {
+      setDeletingId(null)
+      console.error('Delete project error:', error)
+      showToast('error', 'Connection Error', 'Unable to verify project subscribers. Please check your connection and try again.')
+    }
   }
 
   const performDeleteProject = async (projectId: number, projectName: string) => {
@@ -119,8 +170,17 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
 
   if (projects.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        No projects found
+       <div className="text-center py-8 sm:py-12 text-gray-500">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center">
+            <img 
+              src="/svg/software.svg" 
+              alt="No projects"
+              className="w-6 h-6 sm:w-8 sm:h-8 opacity-50"
+            />
+          </div>
+          <p className="text-sm sm:text-base">No projects found</p>
+        </div>
       </div>
     )
   }
@@ -144,7 +204,7 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
               
               {/* Delete Button */}
               <button 
-                onClick={() => deleteProject(project.id, project.name)}
+                onClick={async () => await deleteProject(project.id, project.name)}
                 disabled={deletingId === project.id}
                 className="p-1.5 sm:p-2 rounded-full bg-white shadow-sm hover:bg-red-50 border border-gray-200 hover:border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -196,7 +256,12 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
               <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-h-0">
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-1">{project.name}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1 line-clamp-2 sm:line-clamp-3">{project.description}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1" title={project.description}>
+                    {project.description && project.description.length > 35 
+                      ? `${project.description.substring(0, 35)}...` 
+                      : project.description
+                    }
+                  </p>
                 </div>
                 
                 <div className="mt-2">
