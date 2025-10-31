@@ -199,23 +199,6 @@ export default function ProjectEditForm({ project, onClose, onProjectUpdated }: 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700 mb-2">
-                Price
-              </label>
-              <input
-                type="number"
-                id="edit-price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none "
-                placeholder="0.00"
-              />
-            </div>
-
-            <div>
               <label htmlFor="edit-mprice" className="block text-sm font-medium text-gray-700 mb-2">
                 Monthly Price
               </label>
@@ -224,6 +207,22 @@ export default function ProjectEditForm({ project, onClose, onProjectUpdated }: 
                 id="edit-mprice"
                 name="mprice"
                 value={formData.mprice}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none "
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700 mb-2">
+                Annual Price
+              </label>
+              <input
+                type="number"
+                id="edit-price"
+                name="price"
+                value={formData.price}
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"

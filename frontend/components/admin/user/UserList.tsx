@@ -47,40 +47,32 @@ export default function UserList({
   const getUserProjectStats = (userId: number) => {
     const userProjects = appliedProjects.filter(project => project.userId === userId)
     
-    // Blue badge: Applied but no purchase OR applied after last purchase
-    const pendingApplications = userProjects.filter(project => {
-      if (!project.applyDate) return false
-      
-      // No purchase date at all
-      if (!project.purchaseDate) return true
-      
-      // Apply date is greater than purchase date
-      const applyDate = new Date(project.applyDate)
-      const purchaseDate = new Date(project.purchaseDate)
-      return applyDate > purchaseDate
+    // Yellow/Orange badge: Pending Approval (is_apply = 0)
+    const pendingApproval = userProjects.filter(project => project.isApply === 0).length
+    
+    // Blue badge: Free Trial (is_apply = 1 AND no purchase date/periodicity)
+    const freeTrial = userProjects.filter(project => {
+      if (project.isApply !== 1) return false
+      // No purchase date means it's a free trial
+      return !project.purchaseDate || project.purchaseDate === "0" || project.purchaseDate.trim() === ""
     }).length
     
-    // Green badge: Active paid subscriptions (isApply = 1 AND not in free trial)
-    const activePaidSubscriptions = userProjects.filter(project => {
-      // Must be currently active/approved
+    // Green badge: Active Paid Subscriptions (is_apply = 1 AND has purchase date)
+    const activePaid = userProjects.filter(project => {
       if (project.isApply !== 1) return false
-      
-      // Must have payment info (not in free trial)
-      if (!project.purchaseDate) return false
-      
-      // Exclude trial indicators: "0", empty strings, or today's date
-      const defaultDate = new Date().toISOString().split('T')[0]
+      // Must have valid purchase date (not free trial)
       const purchaseDate = project.purchaseDate
-      
-      return purchaseDate && 
-             purchaseDate !== "0" && 
-             purchaseDate.trim() !== "" && 
-             purchaseDate !== defaultDate
+      return purchaseDate && purchaseDate !== "0" && purchaseDate.trim() !== ""
     }).length
+    
+    // Red badge: Expired (is_apply = 2)
+    const expired = userProjects.filter(project => project.isApply === 2).length
     
     return { 
-      totalApplied: pendingApplications,    // Blue badge: pending applications
-      implemented: activePaidSubscriptions // Green badge: active paid subscriptions (not trials)
+      pendingApproval,  // Yellow/Orange badge
+      freeTrial,        // Blue badge
+      activePaid,       // Green badge
+      expired           // Red badge
     }
   }
 
@@ -160,12 +152,22 @@ export default function UserList({
                         </button>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {stats.totalApplied}
+                    <div className="flex flex-wrap gap-1">
+                      {/* Pending Approval */}
+                      <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {stats.pendingApproval}
                       </div>
+                      {/* Free Trial */}
+                      <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {stats.freeTrial}
+                      </div>
+                      {/* Active Paid */}
                       <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                       {stats.implemented}
+                        {stats.activePaid}
+                      </div>
+                      {/* Expired */}
+                      <div className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {stats.expired}
                       </div>
                     </div>
                   </div>
@@ -177,11 +179,21 @@ export default function UserList({
                     </div>
                     <div className="flex items-center space-x-3 flex-shrink-0">
                       <div className="flex space-x-2">
-                        <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                          {stats.totalApplied}
+                        {/* Pending Approval */}
+                        <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                          {stats.pendingApproval}
                         </div>
+                        {/* Free Trial */}
+                        <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                          {stats.freeTrial}
+                        </div>
+                        {/* Active Paid */}
                         <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                         {stats.implemented}
+                          {stats.activePaid}
+                        </div>
+                        {/* Expired */}
+                        <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
+                          {stats.expired}
                         </div>
                       </div>
                       <div className="flex space-x-2">

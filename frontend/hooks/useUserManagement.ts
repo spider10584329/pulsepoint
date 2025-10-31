@@ -133,11 +133,15 @@ export const useUserManagement = () => {
         return
       }
 
-      // Check if user has any applied projects
+      // Check if user has any ACTIVE applied projects
       const userProjects = appliedProjects.filter(project => project.userId === userId)
-      if (userProjects.length > 0) {
+      
+      // Filter for active subscriptions only (isApply = 1)
+      const activeProjects = userProjects.filter(project => project.isApply === 1)
+      
+      if (activeProjects.length > 0) {
         showToast('info', 'Cannot Delete User', 
-          `User ${userToDelete.email} has ${userProjects.length} applied project(s) and cannot be deleted. Please remove their project applications first.`)
+          `User ${userToDelete.email} has ${activeProjects.length} active subscription(s) and cannot be deleted. Please suspend or wait for their subscriptions to expire first.`)
         return
       }
 

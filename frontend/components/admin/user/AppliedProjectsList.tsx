@@ -28,6 +28,7 @@ interface AppliedProject {
 }
 
 interface ProjectSubscriber {
+  id: number
   userId: number
   applyDate: string
   isApply: number
@@ -243,23 +244,27 @@ export default function AppliedProjectsList({
                       <div className="mt-1 mb-1 flex items-center justify-between">
                         {(() => {
                           const getProjectStatus = () => {
-                            if (project.isApply === 1) {
-                              return { label: 'Implemented', color: 'bg-green-100 text-green-800' }
-                            }
+                            const purchaseDate = project.purchaseDate
+                            const hasPaymentInfo = project.periodicity && project.periodicity > 0 && purchaseDate && purchaseDate !== new Date().toISOString().split('T')[0]
                             
-                            // If isApply === 0, check if it's pending or expired
-                            if (project.applyDate && project.purchaseDate) {
-                              const applyDate = new Date(project.applyDate)
-                              const purchaseDate = new Date(project.purchaseDate)
-                              
-                              // If applied before purchase, it means the subscription has expired
-                              if (applyDate < purchaseDate) {
-                                return { label: 'Expired', color: 'bg-red-100 text-red-800' }
+                            if (project.isApply === 1) {
+                              // Active subscription
+                              if (hasPaymentInfo) {
+                                return { label: 'Active Subscription', color: 'bg-green-100 text-green-800' }
+                              } else {
+                                return { label: 'Free Trial', color: 'bg-blue-100 text-blue-800' }
+                              }
+                            } else if (project.isApply === 0) {
+                              // Pending approval
+                              return { label: 'Pending Approval', color: 'bg-yellow-100 text-yellow-800' }
+                            } else {
+                              // isApply === 2 - Expired/Suspended
+                              if (hasPaymentInfo) {
+                                return { label: 'Subscription Expired', color: 'bg-red-100 text-red-800' }
+                              } else {
+                                return { label: 'Trial Expired', color: 'bg-red-100 text-red-800' }
                               }
                             }
-                            
-                            // Default to pending for other cases
-                            return { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' }
                           }
                           
                           const status = getProjectStatus()

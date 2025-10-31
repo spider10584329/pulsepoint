@@ -29,10 +29,11 @@ class ApplyProject(Resource):
         new_item = AppliedProjectModel(
             user_id = data['userId'],
             project_id = data['projectId'],
-            apply_date = data['applyDate'],
+            apply_date = data['applyDate'],           
             is_apply = data['isApply'],
-            user_count = data['userCount']
-            # purchase_date = data['purchaseDate']
+            user_count = data['userCount'],
+            periodicity = data['periodicity']
+            #purchase_date = data['purchaseDate']
         )
         try:
             new_item.save_to_db()
@@ -50,7 +51,19 @@ class UpdateProjectApply(Resource):
             data = request.get_json()
         else:
             data = parser.parse_args()
-        return AppliedProjectModel.update_one(request.args.get('id'), data['isApply'], data['purchaseDate'], data['periodicity'])
+        
+        # Get optional fields with defaults
+        purchase_date = data.get('purchaseDate')
+        periodicity = data.get('periodicity')
+        apply_date = data.get('applyDate')
+        
+        return AppliedProjectModel.update_one(
+            request.args.get('id'), 
+            data['isApply'], 
+            purchase_date, 
+            periodicity,
+            apply_date
+        )
 
 class ReadAllAppliedProject(Resource):
     @jwt_required()

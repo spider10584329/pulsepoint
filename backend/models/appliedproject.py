@@ -20,16 +20,20 @@ class AppliedProjectModel(db.Model):
         
     @classmethod
     def find_by_user_project(cls, userId, projectId):
-        return AppliedProjectModel.query.filter(AppliedProjectModel.user_id == userId).filter(AppliedProjectModel.project_id == projectId).first()
+        return AppliedProjectModel.query.filter(AppliedProjectModel.user_id == userId).filter(AppliedProjectModel.project_id == projectId).filter(AppliedProjectModel.is_apply == '1').first()
 
     @classmethod
-    def update_one(cls, id, status, purchaseDate, periodicity):
+    def update_one(cls, id, status, purchaseDate=None, periodicity=None, applyDate=None):
         try:
             record = cls.query.get(id)
             if record:
                 record.is_apply = status
-                record.purchase_date = purchaseDate
-                record.periodicity = periodicity
+                if purchaseDate is not None:
+                    record.purchase_date = purchaseDate
+                if periodicity is not None:
+                    record.periodicity = periodicity
+                if applyDate is not None:
+                    record.apply_date = applyDate
                 db.session.commit()
                 return {'status': 1, 'message': 'Updated successfully'}
             else:

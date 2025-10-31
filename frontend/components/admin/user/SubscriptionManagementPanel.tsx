@@ -12,6 +12,7 @@ interface User {
 }
 
 interface ProjectSubscriber {
+  id: number
   userId: number
   applyDate: string
   isApply: number
@@ -97,27 +98,23 @@ export default function SubscriptionManagementPanel({
     const purchaseDate = subscriber.purchaseDate || subscriber.purchase_date
     const hasPaymentInfo = subscriber.periodicity && subscriber.periodicity > 0 && purchaseDate && purchaseDate !== new Date().toISOString().split('T')[0]
     
-    if (subscriber.isApply === 1) {
+    // Use the current status from state if available, otherwise use subscriber.isApply
+    const currentStatus = statuses[subscriber.userId] ?? subscriber.isApply
+    
+    if (currentStatus === 1) {
       if (hasPaymentInfo) {
         return { type: 'paid', label: 'Active Subscription', color: 'bg-green-100 text-green-800' }
       } else {
         return { type: 'trial', label: 'Free Trial', color: 'bg-blue-100 text-blue-800' }
       }
+    } else if (currentStatus === 0) {
+      return { type: 'pending', label: 'Pending Approval', color: 'bg-yellow-100 text-yellow-800' }
     } else {
-      // Check if user has requested to reapply (apply_date > purchase_date)
-      if (subscriber.applyDate && purchaseDate) {
-        const applyDate = new Date(subscriber.applyDate)
-        const purchaseDateObj = new Date(purchaseDate)
-        
-        if (applyDate > purchaseDateObj) {
-          return { type: 'reapply', label: 'Re apply', color: 'bg-yellow-100 text-yellow-800' }
-        }
-      }
-      
+      // currentStatus === 2 (Expired/Suspended)
       if (hasPaymentInfo) {
         return { type: 'expired', label: 'Subscription Expired', color: 'bg-red-100 text-red-800' }
       } else {
-        return { type: 'trial_expired', label: 'Trial Expired', color: 'bg-yellow-100 text-yellow-800' }
+        return { type: 'trial_expired', label: 'Trial Expired', color: 'bg-red-100 text-red-800' }
       }
     }
   }
@@ -293,8 +290,9 @@ export default function SubscriptionManagementPanel({
                           value={statuses[subscriber.userId] ?? subscriber.isApply}
                           onChange={(value) => handleStatusChange(subscriber.userId, parseInt(value.toString()))}
                           options={[
-                            { value: 0, label: 'Suspended' },
-                            { value: 1, label: 'Active' }
+                            { value: 0, label: 'Pending Approval' },
+                            { value: 1, label: 'Active' },
+                            { value: 2, label: 'Expired/Suspended' }
                           ]}
                           placeholder="Select status"
                         />
@@ -380,7 +378,7 @@ export default function SubscriptionManagementPanel({
                     <button
                       onClick={handleSave}
                       disabled={loading}
-                      className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                      className="w-full sm:w-auto px-4 py-2 text-sm text-white bg-gray-800 border border-transparent rounded-md hover:bg-gray-900 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                     >
                       {loading ? (
                         <div className="flex items-center justify-center">
@@ -406,49 +404,64 @@ export default function SubscriptionManagementPanel({
               const status = getSubscriptionStatus(subscriber)
 
               return (
-                <div key={subscriber.userId} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm sm:text-base">{user.email}</h4>
-                      <div className="text-xs sm:text-sm text-gray-500 space-y-1 mt-2">
-                        <div className="flex items-center space-x-4">
-                          <span>Applied: {new Date(subscriber.applyDate).toLocaleDateString()}</span>
-                        </div>
-                        
-                        {subscriber.periodicity && subscriber.periodicity > 0 && subscriber.purchaseDate && subscriber.purchaseDate !== new Date().toISOString().split('T')[0] ? (
-                          <div className="bg-gray-50 rounded p-2 mt-2 text-xs">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <span className="font-medium">Subscription:</span>
-                                <div>{subscriber.periodicity} month{subscriber.periodicity > 1 ? 's' : ''}</div>
-                              </div>
-                              <div>
-                                <span className="font-medium">Purchase Date:</span>
-                                <div>{new Date(subscriber.purchaseDate).toLocaleDateString()}</div>
-                              </div>
-                              <div className="col-span-2">
-                                <span className="font-medium">Expires:</span>
-                                <div>
-                                  {new Date(new Date(subscriber.purchaseDate).setMonth(
-                                    new Date(subscriber.purchaseDate).getMonth() + subscriber.periodicity
-                                  )).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 italic mt-2">
-                            No payment information - Trial subscription
-                          </div>
-                        )}
+                <div key={subscriber.userId} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-white shadow-sm">
+                  <div className="flex flex-col space-y-3">
+                    {/* User Email and Status Badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                          {user.email}
+                        </h4>
                       </div>
-                    </div>
-                    
-                    <div className="flex-shrink-0 ml-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${status.color}`}>
                         {status.label}
                       </span>
                     </div>
+
+                    {/* Applied Date */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-500">Applied:</span>
+                        <span className="font-medium text-gray-700">{new Date(subscriber.applyDate).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    {/* Payment Information Card */}
+                    {subscriber.periodicity && subscriber.periodicity > 0 && subscriber.purchaseDate && subscriber.purchaseDate !== new Date().toISOString().split('T')[0] ? (
+                      <div className="bg-gray-50 rounded-lg p-2.5 sm:p-3 border border-gray-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs sm:text-sm">
+                          <div className="space-y-0.5">
+                            <span className="text-gray-500 block text-xs">Subscription:</span>
+                            <span className="font-medium text-gray-900 block">
+                              {subscriber.periodicity} {subscriber.periodicity === 1 ? 'month' : 'months'}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-gray-500 block text-xs">Purchase Date:</span>
+                            <span className="font-medium text-gray-900 block">
+                              {new Date(subscriber.purchaseDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5 sm:col-span-2">
+                            <span className="text-gray-500 block text-xs">Expires:</span>
+                            <span className="font-medium text-gray-900 block">
+                              {new Date(new Date(subscriber.purchaseDate).setMonth(
+                                new Date(subscriber.purchaseDate).getMonth() + subscriber.periodicity
+                              )).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 sm:p-3">
+                        <p className="text-xs sm:text-sm text-yellow-800 italic flex items-center gap-2">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>No payment information - Trial subscription</span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )
