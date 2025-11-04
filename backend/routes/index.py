@@ -4,6 +4,7 @@ from routes.appliedproject import appliedprojectRouteIndex
 from routes.hardware import hardwareRouteIndex
 from routes.appliedhardware import appliedhardwareRouteIndex
 from routes.device import deviceRouteIndex
+from routes.faq import faqRouteIndex
 
 def Route_index(app):
     userRouteIndex(app)
@@ -12,3 +13,4 @@ def Route_index(app):
     hardwareRouteIndex(app)
     appliedhardwareRouteIndex(app)
     deviceRouteIndex(app)
+    faqRouteIndex(app)

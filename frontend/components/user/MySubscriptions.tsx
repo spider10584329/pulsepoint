@@ -91,80 +91,93 @@ export default function MySubscriptions({ subscriptions, onRefresh }: MySubscrip
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {subscriptions.map((subscription) => {
-        const status = getStatusBadge(subscription)
-        
-        return (
-          <div key={subscription.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200">
-            {/* Image Section */}
-            <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100">
-              {subscription.filename && !imageErrors[subscription.id] ? (
-                <img
-                  src={`http://localhost:5001/project/download?filepath=${subscription.filename}`}
-                  alt={subscription.projectName}
-                  className="w-full h-full object-cover"
-                  onError={() => handleImageError(subscription.id)}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                    <img 
-                      src="/svg/software.svg" 
-                      alt="Software"
-                      className="w-8 h-8 opacity-70"
-                    />
+    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Software
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Applied
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Purchased
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Period
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Expires
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {subscriptions.map((subscription) => {
+            const status = getStatusBadge(subscription)
+            const expirationDate = subscription.purchaseDate && subscription.periodicity
+              ? (() => {
+                  const purchase = new Date(subscription.purchaseDate)
+                  const expiry = new Date(purchase)
+                  expiry.setMonth(expiry.getMonth() + subscription.periodicity)
+                  return formatDate(expiry.toISOString())
+                })()
+              : 'N/A'
+            
+            return (
+              <tr key={subscription.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 h-10 w-10">
+                      {subscription.filename && !imageErrors[subscription.id] ? (
+                        <img
+                          src={`http://localhost:5001/project/download?filepath=${subscription.filename}`}
+                          alt={subscription.projectName}
+                          className="h-10 w-10 rounded-lg object-cover"
+                          onError={() => handleImageError(subscription.id)}
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <img 
+                            src="/svg/software.svg" 
+                            alt="Software"
+                            className="w-6 h-6 opacity-50"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">{subscription.projectName}</div>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {/* Status Badge */}
-              <div className="absolute top-3 right-3">
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${status.className}`}>
-                  {status.text}
-                </span>
-              </div>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-5">
-              <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-1">
-                {subscription.projectName}
-              </h3>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Subscribed on:</span>
-                  <span className="font-medium text-gray-900">{formatDate(subscription.applyDate)}</span>
-                </div>
-                
-                {subscription.purchaseDate && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Purchase Date:</span>
-                    <span className="font-medium text-gray-900">{formatDate(subscription.purchaseDate)}</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{formatDate(subscription.applyDate)}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{formatDate(subscription.purchaseDate)}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {subscription.periodicity === 12 ? '12 months' : subscription.periodicity === 1 ? '1 month' : 'N/A'}
                   </div>
-                )}
-                
-                {subscription.periodicity && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Plan Type:</span>
-                    <span className="font-medium text-gray-900">
-                      {subscription.periodicity === 12 ? 'Annual' : 'Monthly'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Button */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <button className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                  Manage Subscription
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{expirationDate}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${status.className}`}>
+                    {status.text}
+                  </span>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

@@ -99,7 +99,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       case 2: // Support Team Member
         return [
           { name: 'Dashboard', href: '/supportTeam', icon: '/svg/dashboard.svg' },
-          { name: 'Tickets', href: '/supportTeam/tickets', icon: '/svg/notification.svg' },
+          { name: 'Tickets', href: '/supportTeam/tickets', icon: '/svg/support.svg' },
+          { name: 'FAQ', href: '/supportTeam/faq', icon: '/svg/fag.svg' },
         ]
       default:
         return []
