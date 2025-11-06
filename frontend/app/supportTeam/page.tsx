@@ -3,27 +3,142 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
+import { useToast } from '@/lib/context/ToastContext'
+
+interface Ticket {
+  id: number
+  user_id: number
+  title: string
+  flag: number
+  created_at: string
+  message_count: number
+  user?: {
+    firstname: string
+    lastname: string
+    email: string
+  }
+}
+
+interface FAQ {
+  id: number
+  title: string
+  filename: string
+}
+
+interface TicketStats {
+  total: number
+  open: number
+  inProgress: number
+  resolved: number
+  todayTickets: number
+}
 
 export default function SupportTeamDashboardPage() {
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [faqs, setFaqs] = useState<FAQ[]>([])
+  const [stats, setStats] = useState<TicketStats>({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+    todayTickets: 0
+  })
+  const router = useRouter()
+  const { showToast } = useToast()
 
   useEffect(() => {
-    // Get user data from localStorage (AuthGuard ensures it's valid)
     const userData = localStorage.getItem('user')
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData)
         setUser(parsedUser)
+        fetchDashboardData()
       } catch (error) {
-        // This shouldn't happen due to AuthGuard, but handle it just in case
-        console.error('Error parsing user data:', error)
+        router.push('/')
       }
     }
     setIsLoading(false)
   }, [])
 
-  // Show loading while AuthGuard is checking authentication
+  const fetchDashboardData = async () => {
+    await Promise.all([fetchTickets(), fetchFAQs()])
+  }
+
+  const fetchTickets = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('http://localhost:5001/api/tickets/all', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setTickets(data)
+        calculateStats(data)
+      } else if (response.status === 401 || response.status === 403) {
+        const userData = localStorage.getItem('user')
+        if (userData) {
+          const user = JSON.parse(userData)
+          localStorage.setItem('pendingUserId', user.id.toString())
+          localStorage.setItem('pendingUserEmail', user.email)
+          router.push(`/verify?id=${user.id}&email=${encodeURIComponent(user.email)}`)
+        } else {
+          router.push('/')
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error)
+    }
+  }
+
+  const fetchFAQs = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/faq/read')
+      if (response.ok) {
+        const data = await response.json()
+        setFaqs(data)
+      }
+    } catch (error) {
+      console.error('Error fetching FAQs:', error)
+    }
+  }
+
+  const calculateStats = (ticketData: Ticket[]) => {
+    const today = new Date().toISOString().split('T')[0]
+    
+    const open = ticketData.filter(t => t.flag === 0).length
+    const inProgress = ticketData.filter(t => t.flag === 1).length
+    const resolved = ticketData.filter(t => t.flag === 2).length
+    const todayTickets = ticketData.filter(t => 
+      t.created_at && t.created_at.startsWith(today)
+    ).length
+
+    setStats({
+      total: ticketData.length,
+      open,
+      inProgress,
+      resolved,
+      todayTickets
+    })
+  }
+
+  const getRecentTickets = () => {
+    return tickets
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5)
+  }
+
+  const getPriorityTickets = () => {
+    return tickets
+      .filter(t => t.flag === 0) // Open tickets only
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .slice(0, 5)
+  }
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -32,155 +147,189 @@ export default function SupportTeamDashboardPage() {
     )
   }
 
+  const recentTickets = getRecentTickets()
+  const priorityTickets = getPriorityTickets()
+
   return (
     <AuthGuard requireVerification={true} allowedRoles={[2]}>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Support Dashboard - Welcome back, {user?.firstname || 'Support'}!
-          </h1>
-          <p className="text-gray-600">
-            Support team control panel for managing customer requests and system issues.
-          </p>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+            <div className="text-xs sm:text-sm text-gray-500">Welcome, {user.firstname} {user.lastname}</div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Open Tickets</p>
-                <p className="text-2xl font-bold text-gray-900">23</p>
-              </div>
-            </div>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          {/* Total Tickets */}
+          <div className="bg-blue-500 rounded-lg shadow-md p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm font-medium text-white uppercase mb-1">Total Tickets</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{stats.total}</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Urgent Issues</p>
-                <p className="text-2xl font-bold text-gray-900">5</p>
-              </div>
-            </div>
+          {/* Open Tickets */}
+          <div className="bg-orange-500 rounded-lg shadow-md p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm font-medium text-white uppercase mb-1">Open</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{stats.open}</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Resolved Today</p>
-                <p className="text-2xl font-bold text-gray-900">18</p>
-              </div>
-            </div>
+          {/* In Progress */}
+          <div className="bg-yellow-500 rounded-lg shadow-md p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm font-medium text-white uppercase mb-1">In Progress</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{stats.inProgress}</p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold text-gray-900">142</p>
-              </div>
-            </div>
+          {/* Resolved */}
+          <div className="bg-green-500 rounded-lg shadow-md p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm font-medium text-white uppercase mb-1">Resolved</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{stats.resolved}</p>
+          </div>
+
+          {/* Today's Tickets */}
+          <div className="bg-purple-500 rounded-lg shadow-md p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm font-medium text-white uppercase mb-1">Today</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{stats.todayTickets}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Support Team Information</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          {/* Priority Tickets - Oldest Open Tickets */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="px-6 py-4">
+              <h2 className="text-lg font-bold  flex items-center gap-2">
+                Priority Tickets
+              </h2>             
+            </div>
+            <div className="px-4 pb-4">
+              {priorityTickets.length === 0 ? (
+                <div className="text-center py-8">
+                  <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-gray-500 font-medium">No open tickets</p>
+                  <p className="text-gray-400 text-sm">All tickets are being handled</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {priorityTickets.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      onClick={() => router.push(`/supportTeam/tickets/${ticket.id}`)}
+                      className="p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 line-clamp-1">
+                          #{ticket.id} - {ticket.title}
+                        </h3>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 whitespace-nowrap flex-shrink-0">
+                          Open
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span className="truncate">
+                          {ticket.user?.firstname} {ticket.user?.lastname}
+                        </span>
+                        <span className="whitespace-nowrap ml-2">
+                          {new Date(ticket.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Tickets */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="px-6 py-4">
+              <h2 className="text-lg font-bold  flex items-center gap-2">
+                Recent Activity
+              </h2>
+            </div>
+            <div className="px-4 pb-4">
+              {recentTickets.length === 0 ? (
+                <div className="text-center py-8">
+                  <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                  <p className="text-gray-500 font-medium">No tickets yet</p>
+                  <p className="text-gray-400 text-sm">New tickets will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentTickets.map((ticket) => {
+                    const statusColors = {
+                      0: 'bg-blue-100 text-blue-800',
+                      1: 'bg-yellow-100 text-yellow-800',
+                      2: 'bg-green-100 text-green-800',
+                      3: 'bg-gray-100 text-gray-800'
+                    }
+                    const statusText = {
+                      0: 'Open',
+                      1: 'In Progress',
+                      2: 'Resolved',
+                      3: 'Closed'
+                    }
+                    
+                    return (
+                      <div
+                        key={ticket.id}
+                        onClick={() => router.push(`/supportTeam/tickets/${ticket.id}`)}
+                        className="p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 line-clamp-1">
+                            #{ticket.id} - {ticket.title}
+                          </h3>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${statusColors[ticket.flag as keyof typeof statusColors]}`}>
+                            {statusText[ticket.flag as keyof typeof statusText]}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span className="truncate">
+                            {ticket.user?.firstname} {ticket.user?.lastname}
+                          </span>
+                          <span className="whitespace-nowrap ml-2">
+                            {new Date(ticket.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ Summary Section */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="px-6 py-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Personal Details</h3>
-              <dl className="space-y-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Full Name</dt>
-                  <dd className="text-sm text-gray-900">{user?.firstname || ''} {user?.lastname || ''}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Email</dt>
-                  <dd className="text-sm text-gray-900">{user?.email || ''}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Role</dt>
-                  <dd className="text-sm text-gray-900 font-medium text-orange-600">Support Team Member</dd>
-                </div>
-              </dl>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Support Metrics</h3>
-              <dl className="space-y-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Tickets Resolved This Month</dt>
-                  <dd className="text-sm text-gray-900">147</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Average Response Time</dt>
-                  <dd className="text-sm text-gray-900">2.3 hours</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Customer Satisfaction</dt>
-                  <dd className="text-sm text-gray-900">4.8/5.0</dd>
-                </div>
-              </dl>
+              <h2 className="text-lg font-bold ">
+                Knowledge Base
+              </h2>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Support Activities</h2>
-          <div className="space-y-4">
-            <div className="flex items-center p-3 bg-red-50 rounded-lg">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+          <div className="px-6 pb-6">
+            {faqs.length > 0 && (
+              <div >
+                <p className="text-sm font-medium text-gray-700">Recent FAQs:</p>
+                <div className="space-y-2">
+                  {faqs.slice(0, 3).map((faq) => (
+                    <div
+                      key={faq.id}
+                      className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"
+                    >
+                      <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="truncate">{faq.title}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">High priority ticket #4521 assigned</p>
-                <p className="text-sm text-gray-500">15 minutes ago</p>
-              </div>
-            </div>
-            <div className="flex items-center p-3 bg-green-50 rounded-lg">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">Customer issue resolved - Ticket #4518</p>
-                <p className="text-sm text-gray-500">1 hour ago</p>
-              </div>
-            </div>
-            <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">Knowledge base article updated</p>
-                <p className="text-sm text-gray-500">2 hours ago</p>
-              </div>
-            </div>
-            <div className="flex items-center p-3 bg-yellow-50 rounded-lg">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">System maintenance scheduled</p>
-                <p className="text-sm text-gray-500">4 hours ago</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

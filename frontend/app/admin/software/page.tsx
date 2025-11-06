@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
 import ProjectRegistrationForm from '@/components/admin/software/ProjectRegistrationForm'
 import ProjectEditForm from '@/components/admin/software/ProjectEditForm'
@@ -12,6 +13,7 @@ export default function AdminSoftwarePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [projectListKey, setProjectListKey] = useState(0)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const router = useRouter()
 
   const refreshProjectList = () => {
     setProjectListKey(prev => prev + 1)
@@ -37,7 +39,7 @@ export default function AdminSoftwarePage() {
         const parsedUser = JSON.parse(userData)
         setUser(parsedUser)
       } catch (error) {
-        console.error('Error parsing user data:', error)
+        router.push('/')
       }
     }
     setIsLoading(false)

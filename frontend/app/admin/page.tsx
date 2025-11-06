@@ -126,8 +126,8 @@ export default function AdminPage() {
         const appliedData = await appliedProjectsRes.json()
         setAppliedProjects(appliedData)
       }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+    } catch (error) {     
+          router.push('/')
     } finally {
       setLoading(false)
     }

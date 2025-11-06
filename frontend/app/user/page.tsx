@@ -58,11 +58,12 @@ export default function UserDashboardPage() {
         const data = await response.json()
         setSubscriptions(data)
         calculateStats(data)
+      } else if (response.status === 401 || response.status === 403) {    
+          router.push('/')       
       } else {
         showToast('error', 'Error', 'Failed to fetch subscriptions')
       }
-    } catch (error) {
-      console.error('Error fetching subscriptions:', error)
+    } catch (error) {     
       showToast('error', 'Error', 'Failed to fetch subscriptions')
     } finally {
       setIsLoading(false)
