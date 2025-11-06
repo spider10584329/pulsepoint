@@ -111,8 +111,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100">
-
-
       {/* Static sidebar - always visible */}
       <div className="flex flex-shrink-0">
         <div className={`flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>

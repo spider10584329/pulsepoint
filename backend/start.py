@@ -37,4 +37,8 @@ migrate = Migrate(app, db)
 
 @app.before_request
 def create_tables():
+    # Import models to ensure they are registered
+    from models.user import UserModel
+    from models.ticket import Ticket
+    from models.support import Support
     db.create_all()

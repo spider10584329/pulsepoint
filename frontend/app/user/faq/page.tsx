@@ -203,36 +203,37 @@ export default function UserFAQPage() {
               </table>
             </div>
           )}
-        </div>
-
-        {/* PDF Modal */}
+        </div>        
+      </div>
+      {/* PDF Modal */}
         {showPDFModal && selectedFAQ && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-11/12 h-5/6 max-w-6xl">
-              <div className="flex justify-between items-center p-4 border-b">
-                <h3 className="text-lg font-semibold text-gray-900">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white  shadow-xl w-full max-w-4xl h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
                   {selectedFAQ.title}
-                </h3>
-                <button
-                  onClick={closePDFModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={closePDFModal}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div className="p-4" style={{ height: 'calc(100% - 70px)' }}>
+              <div className="flex-1 overflow-hidden">
                 <iframe
-                  src={`http://localhost:5001/faq/view?filepath=${encodeURIComponent(selectedFAQ.filename)}`}
-                  className="w-full h-full border-0 rounded"
+                  src={`http://localhost:5001/faq/view?filepath=${encodeURIComponent(selectedFAQ.filename)}#view=FitH`}
+                  className="w-full h-full border-0"
                   title={selectedFAQ.title}
                 />
               </div>
             </div>
           </div>
         )}
-      </div>
     </AuthGuard>
   )
 }
