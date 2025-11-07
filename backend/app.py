@@ -44,5 +44,10 @@ def handle_disconnect():
     print('Client disconnected')
 
 if (__name__ == "__main__"):
+    # For HTTPS, uncomment these lines and add cert.pem and key.pem files:
+    # socketio.run(app, host='localhost', port=5001, debug=True, use_reloader=False, 
+    #              certfile='cert.pem', keyfile='key.pem')
+    
+    # For HTTP (default):
     socketio.run(app, host='localhost', port=5001, debug=True, use_reloader=False)
 

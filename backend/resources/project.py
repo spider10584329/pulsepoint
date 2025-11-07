@@ -118,3 +118,26 @@ class FileDownload(Resource):
         response = make_response(send_from_directory('uploads', filepath))
         response.headers['Content-Disposition'] = f'attachment; filename="{filepath}"'
         return response
+
+class PublicProjectList(Resource):
+    def get(self):
+        """
+        Public API endpoint to retrieve list of all projects (software)
+        Returns: List of projects with id and name only
+        No authentication required - accessible from external sources
+        """
+        try:
+            projects = ProjectModel.return_all()
+            
+            # Transform the data to return only id and softwarename
+            public_list = []
+            for project in projects:
+                public_list.append({
+                    'id': project['id'],
+                    'softwarename': project['name']
+                })
+            
+            return public_list, 200
+            
+        except Exception as e:
+            return {'error': str(e), 'message': 'Failed to retrieve project list'}, 500
