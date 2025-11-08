@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '../../lib/context/ToastContext'
+import { getBackendUrl } from '../../lib/api'
 
 export default function VerifyPage() {
   const [verifyCode, setVerifyCode] = useState('')
@@ -12,6 +13,7 @@ export default function VerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
   useEffect(() => {
     // Get user ID from URL params or localStorage
@@ -41,7 +43,7 @@ export default function VerifyPage() {
     setSubmitLoading(true)
 
     try {
-      const response = await fetch('http://localhost:5001/api/user/verify', {
+      const response = await fetch(`${backendUrl}/api/user/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +87,7 @@ export default function VerifyPage() {
     setResendLoading(true)
 
     try {
-      const response = await fetch('http://localhost:5001/api/user/send/verify-email', {
+      const response = await fetch(`${backendUrl}/api/user/send/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

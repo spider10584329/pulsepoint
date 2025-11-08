@@ -5,6 +5,7 @@ import AuthGuard from '@/components/AuthGuard'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { Ticket } from '@/types/ticket'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export default function UserSupportPage() {
   const [user, setUser] = useState<any>(null)
@@ -15,6 +16,7 @@ export default function UserSupportPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [ticketToDelete, setTicketToDelete] = useState<{ id: number; flag: number } | null>(null)
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
   // Form states
   const [title, setTitle] = useState('')
@@ -38,7 +40,7 @@ export default function UserSupportPage() {
   const fetchTickets = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:5001/api/ticket', {
+      const response = await fetch(`${backendUrl}/api/ticket`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -76,7 +78,7 @@ export default function UserSupportPage() {
         formData.append('file', file)
       }
 
-      const response = await fetch('http://localhost:5001/api/ticket', {
+      const response = await fetch(`${backendUrl}/api/ticket`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -106,7 +108,7 @@ export default function UserSupportPage() {
   const handleConfirmCompletion = async (ticketId: number) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:5001/api/ticket/${ticketId}`, {
+      const response = await fetch(`${backendUrl}/api/ticket/${ticketId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -144,7 +146,7 @@ export default function UserSupportPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:5001/api/ticket/${ticketToDelete.id}`, {
+      const response = await fetch(`${backendUrl}/api/ticket/${ticketToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

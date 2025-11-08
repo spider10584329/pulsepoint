@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { useToast } from '@/lib/context/ToastContext'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { Project } from '../../../types/admin/types'
+import { getBackendUrl } from '@/lib/api'
 
 interface ProjectListProps {
   onEditProject?: (project: Project) => void
 }
 
 export default function ProjectList({ onEditProject }: ProjectListProps) {
+  const backendUrl = getBackendUrl()
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -34,7 +36,7 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
         return
       }
 
-      const response = await fetch('http://localhost:5001/api/project/read', {
+      const response = await fetch(`${backendUrl}/api/project/read`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -63,7 +65,7 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
         throw new Error('No authentication token found')
       }
 
-      const response = await fetch('http://localhost:5001/api/apply/project/all', {
+      const response = await fetch(`${backendUrl}/api/apply/project/all`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,7 +131,7 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
         return
       }
 
-      const response = await fetch(`http://localhost:5001/api/project/delete?id=${projectId}`, {
+      const response = await fetch(`${backendUrl}/api/project/delete?id=${projectId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -223,7 +225,7 @@ export default function ProjectList({ onEditProject }: ProjectListProps) {
               <div className="h-24 sm:h-36 w-full sm:w-32 md:w-40 lg:w-48 flex-shrink-0 flex items-center justify-center bg-gray-50">
                 {project.filename ? (
                   <img 
-                    src={`http://localhost:5001/project/download?filepath=${project.filename}`}
+                    src={`${backendUrl}/project/download?filepath=${project.filename}`}
                     alt={project.name}
                     className="h-full w-full object-cover"
                     onError={(e) => {

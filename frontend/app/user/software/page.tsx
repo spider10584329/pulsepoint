@@ -6,6 +6,7 @@ import SoftwareCard from '@/components/user/SoftwareCard'
 import SoftwareDetailModal from '@/components/user/SoftwareDetailModal'
 import { Software } from '@/types/user/software'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export default function UserSoftwarePage() {
   const [user, setUser] = useState<any>(null)
@@ -14,6 +15,7 @@ export default function UserSoftwarePage() {
   const [selectedSoftware, setSelectedSoftware] = useState<Software | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -37,7 +39,7 @@ export default function UserSoftwarePage() {
         return
       }
 
-      const response = await fetch('http://localhost:5001/api/project/read', {
+      const response = await fetch(`${backendUrl}/api/project/read`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import AuthGuard from '@/components/AuthGuard'
 import { FAQ } from '@/types/faq'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export default function UserFAQPage() {
   const [user, setUser] = useState<any>(null)
@@ -14,6 +15,7 @@ export default function UserFAQPage() {
   const [showPDFModal, setShowPDFModal] = useState(false)
   const [selectedFAQ, setSelectedFAQ] = useState<FAQ | null>(null)
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
  const openPDFModal = (faq: FAQ) => {
     setSelectedFAQ(faq)
@@ -53,7 +55,7 @@ export default function UserFAQPage() {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/faq/read')
+      const response = await fetch(`${backendUrl}/api/faq/read`)
       if (response.ok) {
         const data = await response.json()
         setFaqs(data)
@@ -69,7 +71,7 @@ export default function UserFAQPage() {
 
   const downloadFAQ = (e: React.MouseEvent, filename: string, title: string) => {
     e.stopPropagation()
-    const downloadUrl = `http://localhost:5001/faq/download?filepath=${encodeURIComponent(filename)}`
+    const downloadUrl = `${backendUrl}/faq/download?filepath=${encodeURIComponent(filename)}`
     const link = document.createElement('a')
     link.href = downloadUrl
     link.download = `${title}.pdf`
@@ -226,7 +228,7 @@ export default function UserFAQPage() {
               </div>
               <div className="flex-1 overflow-hidden">
                 <iframe
-                  src={`http://localhost:5001/faq/view?filepath=${encodeURIComponent(selectedFAQ.filename)}#view=FitH`}
+                  src={`${backendUrl}/faq/view?filepath=${encodeURIComponent(selectedFAQ.filename)}#view=FitH`}
                   className="w-full h-full border-0"
                   title={selectedFAQ.title}
                 />
@@ -237,3 +239,4 @@ export default function UserFAQPage() {
     </AuthGuard>
   )
 }
+

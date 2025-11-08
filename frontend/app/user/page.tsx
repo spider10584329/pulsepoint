@@ -6,6 +6,7 @@ import AuthGuard from '@/components/AuthGuard'
 import MySubscriptions from '@/components/user/MySubscriptions'
 import { AppliedProject } from '@/types/user/software'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export default function UserDashboardPage() {
   const [user, setUser] = useState<any>(null)
@@ -20,6 +21,7 @@ export default function UserDashboardPage() {
   })
   const router = useRouter()
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -46,7 +48,7 @@ export default function UserDashboardPage() {
         return
       }
 
-      const response = await fetch(`http://localhost:5001/api/apply/project/foruser?id=${userId}`, {
+      const response = await fetch(`${backendUrl}/api/apply/project/foruser?id=${userId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

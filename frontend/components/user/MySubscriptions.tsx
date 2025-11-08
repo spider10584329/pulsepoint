@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AppliedProject } from '@/types/user/software'
+import { getBackendUrl } from '@/lib/api'
 
 interface MySubscriptionsProps {
   subscriptions: AppliedProject[]
@@ -9,6 +10,7 @@ interface MySubscriptionsProps {
 }
 
 export default function MySubscriptions({ subscriptions, onRefresh }: MySubscriptionsProps) {
+  const backendUrl = getBackendUrl()
   const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({})
 
   const handleImageError = (id: number) => {
@@ -134,7 +136,7 @@ export default function MySubscriptions({ subscriptions, onRefresh }: MySubscrip
                     <div className="flex-shrink-0 h-10 w-10">
                       {subscription.filename && !imageErrors[subscription.id] ? (
                         <img
-                          src={`http://localhost:5001/project/download?filepath=${subscription.filename}`}
+                          src={`${backendUrl}/project/download?filepath=${subscription.filename}`}
                           alt={subscription.projectName}
                           className="h-10 w-10 rounded-lg object-cover"
                           onError={() => handleImageError(subscription.id)}

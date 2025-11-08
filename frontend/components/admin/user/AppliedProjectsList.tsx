@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import SubscriptionManagementPanel from '@/components/admin/user/SubscriptionManagementPanel'
+import { getBackendUrl } from '@/lib/api'
 
 interface User {
   id: number
@@ -60,6 +61,7 @@ export default function AppliedProjectsList({
   onConfigureProject,
   onDataUpdate
 }: AppliedProjectsListProps) {
+  const backendUrl = getBackendUrl()
   const [subscriptionPanel, setSubscriptionPanel] = useState<{
     isActive: boolean
     projectId: number
@@ -194,7 +196,7 @@ export default function AppliedProjectsList({
                     <div className="h-48 sm:h-56 lg:h-32 xl:h-36 w-full lg:w-32 xl:w-40 2xl:w-48 flex-shrink-0 flex items-center justify-center bg-gray-50">
                       {project.filename ? (
                         <img 
-                          src={`http://localhost:5001/project/download?filepath=${project.filename}`}
+                          src={`${backendUrl}/project/download?filepath=${project.filename}`}
                           alt={project.projectName}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -305,7 +307,7 @@ export default function AppliedProjectsList({
                       <div className="h-64 sm:h-56 lg:h-32 xl:h-36 w-full lg:w-32 xl:w-40 2xl:w-48 flex-shrink-0 flex items-center justify-center bg-gray-50">
                         {firstProjectInstance?.filename ? (
                           <img 
-                            src={`http://localhost:5001/project/download?filepath=${firstProjectInstance.filename}`}
+                            src={`${backendUrl}/project/download?filepath=${firstProjectInstance.filename}`}
                             alt={project.projectName}
                             className="w-full h-full object-cover"
                             onError={(e) => {

@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { User, AppliedProject } from '@/types/admin/admin'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export const useUserManagement = () => {
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [users, setUsers] = useState<User[]>([])
@@ -46,7 +48,7 @@ export const useUserManagement = () => {
 
   const fetchUsers = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/allusers', {
+      const response = await fetch(`${backendUrl}/api/user/allusers`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -67,7 +69,7 @@ export const useUserManagement = () => {
 
   const fetchAppliedProjects = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:5001/api/apply/project/all', {
+      const response = await fetch(`${backendUrl}/api/apply/project/all`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -171,7 +173,7 @@ export const useUserManagement = () => {
       setConfirmDialog(prev => ({ ...prev, isOpen: false }))
 
       // Make API call to delete user
-      const response = await fetch(`http://localhost:5001/api/user/delete?id=${userId}`, {
+      const response = await fetch(`${backendUrl}/api/user/delete?id=${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -226,7 +228,7 @@ export const useUserManagement = () => {
         isVerify: updatedUser.isVerify.toString()
       }
       
-      const response = await fetch(`http://localhost:5001/api/user/update/details?id=${updatedUser.id}`, {
+      const response = await fetch(`${backendUrl}/api/user/update/details?id=${updatedUser.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

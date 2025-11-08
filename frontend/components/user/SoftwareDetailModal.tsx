@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Software, SubscriptionType } from '@/types/user/software'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 interface SoftwareDetailModalProps {
   software: Software
@@ -17,6 +18,7 @@ export default function SoftwareDetailModal({
   userId,
   onSubscriptionSuccess 
 }: SoftwareDetailModalProps) {
+  const backendUrl = getBackendUrl()
   const [imageError, setImageError] = useState(false)
   const [selectedType, setSelectedType] = useState<SubscriptionType>('monthly') // Default to monthly
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -103,7 +105,7 @@ export default function SoftwareDetailModal({
           return
         }
 
-        const response = await fetch(`http://localhost:5001/api/apply/project/foruser?id=${userId}`, {
+        const response = await fetch(`${backendUrl}/api/apply/project/foruser?id=${userId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -169,7 +171,7 @@ export default function SoftwareDetailModal({
       const today = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
       
       // Check if user has existing subscription for this project
-      const checkResponse = await fetch(`http://localhost:5001/api/apply/project/foruser?id=${userId}`, {
+      const checkResponse = await fetch(`${backendUrl}/api/apply/project/foruser?id=${userId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -201,7 +203,7 @@ export default function SoftwareDetailModal({
           // Note: periodicity and purchaseDate are intentionally not set (empty/null for free trial)
         }
 
-        const response = await fetch('http://localhost:5001/api/apply/project', {
+        const response = await fetch(`${backendUrl}/api/apply/project`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -269,7 +271,7 @@ export default function SoftwareDetailModal({
 
         console.log('Sending update request with data:', requestData)
 
-        const response = await fetch(`http://localhost:5001/api/apply/project/update?id=${subscriptionId}`, {
+        const response = await fetch(`${backendUrl}/api/apply/project/update?id=${subscriptionId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -340,7 +342,7 @@ export default function SoftwareDetailModal({
               <div className="rounded-lg sm:rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-gray-50 to-gray-100">
                 {software.filename && !imageError ? (
                   <img
-                    src={`http://localhost:5001/project/download?filepath=${software.filename}`}
+                    src={`${backendUrl}/project/download?filepath=${software.filename}`}
                     alt={software.name}
                     className="w-full h-48 sm:h-64 lg:h-80 object-cover"
                     onError={() => setImageError(true)}

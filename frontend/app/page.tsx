@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '../lib/context/ToastContext'
+import { getBackendUrl } from '../lib/api'
 
 export default function HomePage() {
   const [isLogin, setIsLogin] = useState(true)
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
   
   const [formData, setFormData] = useState({
     // Login fields
@@ -46,7 +48,7 @@ export default function HomePage() {
       }
       
       // Direct call to backend using existing user endpoints
-      const response = await fetch('http://localhost:5001/api/user/signin', {
+      const response = await fetch(`${backendUrl}/api/user/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +125,7 @@ export default function HomePage() {
       }
 
       // Direct call to backend using existing user registration endpoint
-      const response = await fetch('http://localhost:5001/api/user/register', {
+      const response = await fetch(`${backendUrl}/api/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

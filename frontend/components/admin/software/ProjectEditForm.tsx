@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useToast } from '@/lib/context/ToastContext'
 import { Project } from '../../../types/admin/types'
 import { ProjectFormData } from './ProjectRegistrationForm'
+import { getBackendUrl } from '@/lib/api'
 
 interface ProjectEditFormProps {
   project: Project | null
@@ -12,6 +13,7 @@ interface ProjectEditFormProps {
 }
 
 export default function ProjectEditForm({ project, onClose, onProjectUpdated }: ProjectEditFormProps) {
+  const backendUrl = getBackendUrl()
   const { showToast } = useToast()
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
@@ -85,7 +87,7 @@ export default function ProjectEditForm({ project, onClose, onProjectUpdated }: 
         submitData.append('mprice', formData.mprice)
         submitData.append('file', formData.file)
 
-        response = await fetch('http://localhost:5001/api/project/update', {
+        response = await fetch(`${backendUrl}/api/project/update`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -103,7 +105,7 @@ export default function ProjectEditForm({ project, onClose, onProjectUpdated }: 
           mprice: formData.mprice
         }
 
-        response = await fetch('http://localhost:5001/api/project/update', {
+        response = await fetch(`${backendUrl}/api/project/update`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -1,11 +1,13 @@
 from models.project import ProjectModel
 from flask_restful import Resource, reqparse
-from flask import request, send_from_directory, make_response
+from flask import request, send_from_directory, make_response, Response
 from flask_jwt_extended import jwt_required
 import os
 import uuid
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import csv
+from io import StringIO
 
 parser = reqparse.RequestParser()
 parser.add_argument('id')
@@ -288,3 +290,96 @@ class GetSubscriptionData(Resource):
             
         except Exception as e:
             return {'error': str(e), 'message': 'Failed to retrieve subscription data'}, 500
+
+class DownloadSubscriptionCSV(Resource):
+    @jwt_required()
+    def get(self):
+        """
+        Download all subscription data as CSV file
+        JWT authentication required (admin only)
+        """
+        try:
+            # Query all approved subscriptions
+            from start import db
+            from models.appliedproject import AppliedProjectModel
+            from models.user import UserModel
+            
+            query_result = db.session.query(
+                UserModel.id.label('customerID'),
+                UserModel.email.label('customerEmail'),
+                ProjectModel.id.label('softwareID'),
+                ProjectModel.name.label('softwareName'),
+                AppliedProjectModel.purchase_date,
+                AppliedProjectModel.periodicity,
+                ProjectModel.mprice,
+                ProjectModel.price
+            ).join(UserModel, UserModel.id == AppliedProjectModel.user_id) \
+             .join(ProjectModel, ProjectModel.id == AppliedProjectModel.project_id) \
+             .filter(AppliedProjectModel.is_apply == 1) \
+             .filter(AppliedProjectModel.periodicity > 0) \
+             .filter(AppliedProjectModel.purchase_date != '') \
+             .filter(AppliedProjectModel.purchase_date.isnot(None)) \
+             .all()
+            
+            # Create CSV in memory
+            output = StringIO()
+            writer = csv.writer(output)
+            
+            # Write header
+            writer.writerow(['customerID', 'customerEmail', 'softwareID', 'softwareName', 
+                           'purchaseDate', 'period', 'paymentPrice', 'expirationDate'])
+            
+            # Write data rows
+            for record in query_result:
+                # Calculate expiration date
+                purchase_date_str = record.purchase_date
+                periodicity = record.periodicity
+                expiration_date = ''
+                
+                if purchase_date_str and periodicity:
+                    try:
+                        if ' ' in purchase_date_str:
+                            purchase_date_obj = datetime.strptime(purchase_date_str, '%Y-%m-%d %H:%M:%S')
+                        else:
+                            purchase_date_obj = datetime.strptime(purchase_date_str, '%Y-%m-%d')
+                        
+                        expiration_date_obj = purchase_date_obj + relativedelta(months=int(periodicity))
+                        expiration_date = expiration_date_obj.strftime('%Y-%m-%d')
+                    except Exception as e:
+                        expiration_date = ''
+                
+                # Calculate payment price
+                if periodicity == 12:
+                    payment_price = float(record.price) if record.price else 0
+                else:
+                    payment_price = float(record.mprice) * int(periodicity) if record.mprice else 0
+                
+                # Write row
+                writer.writerow([
+                    record.customerID,
+                    record.customerEmail,
+                    record.softwareID,
+                    record.softwareName,
+                    purchase_date_str.split(' ')[0] if ' ' in purchase_date_str else purchase_date_str,
+                    record.periodicity if record.periodicity else 0,
+                    payment_price,
+                    expiration_date
+                ])
+            
+            # Get CSV content
+            csv_content = output.getvalue()
+            output.close()
+            
+            # Create response with CSV file
+            response = Response(
+                csv_content,
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename=subscription_data_{datetime.now().strftime("%Y-%m-%d")}.csv'
+                }
+            )
+            
+            return response
+            
+        except Exception as e:
+            return {'error': str(e), 'message': 'Failed to generate CSV file'}, 500

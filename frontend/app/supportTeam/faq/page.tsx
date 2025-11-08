@@ -5,8 +5,10 @@ import AuthGuard from '@/components/AuthGuard'
 import { FAQ } from '@/types/faq'
 import { useToast } from '@/lib/context/ToastContext'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { getBackendUrl } from '@/lib/api'
 
 export default function SupportTeamFAQPage() {
+  const backendUrl = getBackendUrl()
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [faqs, setFaqs] = useState<FAQ[]>([])
@@ -44,7 +46,7 @@ export default function SupportTeamFAQPage() {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/faq/read')
+      const response = await fetch(`${backendUrl}/api/faq/read`)
       if (response.ok) {
         const data = await response.json()
         setFaqs(data)
@@ -83,7 +85,7 @@ export default function SupportTeamFAQPage() {
       formData.append('title', title)
       formData.append('file', selectedFile)
 
-      const response = await fetch('http://localhost:5001/api/faq/create', {
+      const response = await fetch(`${backendUrl}/api/faq/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -138,7 +140,7 @@ export default function SupportTeamFAQPage() {
         formData.append('title', title)
         formData.append('file', selectedFile)
 
-        const response = await fetch('http://localhost:5001/api/faq/update', {
+        const response = await fetch(`${backendUrl}/api/faq/update`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -160,7 +162,7 @@ export default function SupportTeamFAQPage() {
         }
       } else {
         // Update without new file
-        const response = await fetch('http://localhost:5001/api/faq/update', {
+        const response = await fetch(`${backendUrl}/api/faq/update`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -198,7 +200,7 @@ export default function SupportTeamFAQPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:5001/api/faq/delete?id=${deletingFAQ.id}`, {
+      const response = await fetch(`${backendUrl}/api/faq/delete?id=${deletingFAQ.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -295,7 +297,7 @@ export default function SupportTeamFAQPage() {
 
   const downloadFAQ = (e: React.MouseEvent, filename: string, title: string) => {
     e.stopPropagation() // Prevent row click when clicking download icon
-    const downloadUrl = `http://localhost:5001/faq/download?filepath=${encodeURIComponent(filename)}`
+    const downloadUrl = `${backendUrl}/faq/download?filepath=${encodeURIComponent(filename)}`
     const link = document.createElement('a')
     link.href = downloadUrl
     link.download = `${title}.pdf`
@@ -605,7 +607,7 @@ export default function SupportTeamFAQPage() {
             </div>
             <div className="flex-1 overflow-hidden">
               <iframe
-                src={`http://localhost:5001/faq/view?filepath=${encodeURIComponent(selectedFAQ.filename)}#view=FitH`}
+                src={`${backendUrl}/faq/view?filepath=${encodeURIComponent(selectedFAQ.filename)}#view=FitH`}
                 className="w-full h-full border-0"
                 title={selectedFAQ.title}
               />

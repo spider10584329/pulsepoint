@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export interface ProjectFormData {
   name: string
@@ -17,6 +18,7 @@ interface ProjectRegistrationFormProps {
 }
 
 export default function ProjectRegistrationForm({ onProjectCreated }: ProjectRegistrationFormProps) {
+  const backendUrl = getBackendUrl()
   const { showToast } = useToast()
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
@@ -73,7 +75,7 @@ export default function ProjectRegistrationForm({ onProjectCreated }: ProjectReg
         submitData.append('file', formData.file)
       }
 
-      const response = await fetch('http://localhost:5001/api/project/create', {
+      const response = await fetch(`${backendUrl}/api/project/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

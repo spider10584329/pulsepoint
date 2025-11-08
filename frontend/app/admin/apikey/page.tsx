@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import AuthGuard from '@/components/AuthGuard'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 export default function APIKeyPage() {
   const [generatedApiKey, setGeneratedApiKey] = useState('')
@@ -10,6 +11,7 @@ export default function APIKeyPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
   // Load existing API key on component mount
   useEffect(() => {
@@ -19,7 +21,7 @@ export default function APIKeyPage() {
   const fetchExistingApiKey = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:5001/api/apikey/current', {
+      const response = await fetch(`${backendUrl}/api/apikey/current`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -44,7 +46,7 @@ export default function APIKeyPage() {
     
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:5001/api/apikey/generate', {
+      const response = await fetch(`${backendUrl}/api/apikey/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,22 +79,54 @@ export default function APIKeyPage() {
     })
   }
 
-  const handleDownloadCSV = () => {
-    if (!generatedApiKey.trim()) {
-      showToast('error', 'Error', 'Please generate an API key first')
-      return
-    }
+  const handleDownloadCSV = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${backendUrl}/api/subscription/download/csv`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
 
-    // Create CSV filename with current date
-    const date = new Date().toISOString().split('T')[0]
-    const filename = `subscription_data_${date}.csv`
-    
-    // Simulate CSV download
-    showToast('info', 'Download', `Downloading ${filename}`)
-    
-    // In a real implementation, you would fetch and download the actual CSV file
-    // const csvUrl = `${completeApiUrl}&format=csv`
-    // window.open(csvUrl, '_blank')
+      if (!response.ok) {
+        const data = await response.json()
+        showToast('error', 'Error', data.message || 'Failed to download CSV file')
+        return
+      }
+
+      // Get the blob from response
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `subscription_data_${new Date().toISOString().split('T')[0]}.csv`
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+      
+      link.setAttribute('download', filename)
+      document.body.appendChild(link)
+      link.click()
+      
+      // Cleanup
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      showToast('success', 'Success', 'CSV file downloaded successfully')
+    } catch (error) {
+      console.error('Error downloading CSV:', error)
+      showToast('error', 'Error', 'Failed to download CSV file')
+    }
   }
 
   return (
@@ -121,7 +155,7 @@ export default function APIKeyPage() {
                   type="text"
                   value={isLoading ? 'Loading...' : generatedApiKey}
                   readOnly
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 text-sm"
                   placeholder={generatedApiKey ? generatedApiKey : ''}
                 />
                 <button
@@ -167,7 +201,7 @@ export default function APIKeyPage() {
             <button
               onClick={handleGenerateKey}
               disabled={isGenerating}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors  flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -192,7 +226,7 @@ export default function APIKeyPage() {
               
               <button
                 onClick={handleDownloadCSV}
-                className="w-full px-6 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
+                className="w-full px-6 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors  flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

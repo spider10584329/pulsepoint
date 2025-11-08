@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import AuthGuard from '@/components/AuthGuard'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 interface User {
   firstname: string
@@ -22,6 +23,7 @@ interface Ticket {
 }
 
 export default function SupportTicketsPage() {
+  const backendUrl = getBackendUrl()
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -45,7 +47,7 @@ export default function SupportTicketsPage() {
   const fetchAllTickets = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:5001/api/tickets/all', {
+      const response = await fetch(`${backendUrl}/api/tickets/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

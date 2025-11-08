@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
 import CustomSelect from '@/components/CustomSelect'
+import { getBackendUrl } from '@/lib/api'
 
 interface User {
   id: number
@@ -56,6 +57,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [selectedUserId, setSelectedUserId] = useState<string>('all')
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all')
+  const backendUrl = getBackendUrl()
   
   // Pagination state for each table type per project
   const [paginationState, setPaginationState] = useState<{[key: string]: {
@@ -101,13 +103,13 @@ export default function AdminPage() {
     try {
       // Fetch all required data in parallel
       const [usersRes, projectsRes, appliedProjectsRes] = await Promise.all([
-        fetch('http://localhost:5001/api/user/allusers', {
+        fetch(`${backendUrl}/api/user/allusers`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5001/api/project/read', {
+        fetch(`${backendUrl}/api/project/read`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:5001/api/apply/project/all', {
+        fetch(`${backendUrl}/api/apply/project/all`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         })
       ])

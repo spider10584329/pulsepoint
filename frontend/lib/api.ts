@@ -1,6 +1,13 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+// Get the base backend URL from environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+
+// Helper function to get the full backend URL
+export const getBackendUrl = () => BACKEND_URL
+
+// API base URL includes /api suffix for axios instance
+const API_BASE_URL = `${BACKEND_URL}/api`
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

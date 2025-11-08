@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Software } from '@/types/user/software'
+import { getBackendUrl } from '@/lib/api'
 
 interface SoftwareCardProps {
   software: Software
@@ -9,6 +10,7 @@ interface SoftwareCardProps {
 }
 
 export default function SoftwareCard({ software, onViewDetails }: SoftwareCardProps) {
+  const backendUrl = getBackendUrl()
   const [imageError, setImageError] = useState(false)
 
   const formatPrice = (price: string) => {
@@ -25,7 +27,7 @@ export default function SoftwareCard({ software, onViewDetails }: SoftwareCardPr
         <div className="relative h-40 sm:h-48 lg:h-56 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
           {software.filename && !imageError ? (
             <img
-              src={`http://localhost:5001/project/download?filepath=${software.filename}`}
+              src={`${backendUrl}/project/download?filepath=${software.filename}`}
               alt={software.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={() => setImageError(true)}

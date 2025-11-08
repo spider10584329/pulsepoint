@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
 import { useToast } from '@/lib/context/ToastContext'
 import io, { Socket } from 'socket.io-client'
+import { getBackendUrl } from '@/lib/api'
 
 interface User {
   firstname: string
@@ -35,6 +36,7 @@ interface Message {
 }
 
 export default function SupportTicketDetailPage() {
+  const backendUrl = getBackendUrl()
   const params = useParams()
   const ticketId = params.id as string
   const [user, setUser] = useState<any>(null)
@@ -72,7 +74,7 @@ export default function SupportTicketDetailPage() {
   useEffect(() => {
     if (!user || !ticketId) return
 
-    const newSocket = io('http://localhost:5001', {
+    const newSocket = io(backendUrl, {
       transports: ['websocket'],
       auth: {
         token: localStorage.getItem('token')
@@ -90,9 +92,9 @@ export default function SupportTicketDetailPage() {
         setMessages(prev => [...prev, data.message])
         setTimeout(scrollToBottom, 100)
         
-        // Show toast only if message is from customer (not from support team)
+        // Show blue toast notification if message is from customer (not from support team)
         if (data.message.user_id !== user.id) {
-          showToast('success', 'New Message', `New message from ${data.message.user.firstname}`)
+          showToast('info', 'New Message', `New message from ${data.message.user.firstname}`)
         }
       }
     })
@@ -120,7 +122,7 @@ export default function SupportTicketDetailPage() {
       const token = localStorage.getItem('token')
       
       // Fetch ticket with messages (backend returns ticket.messages array)
-      const ticketResponse = await fetch(`http://localhost:5001/api/ticket/${ticketId}`, {
+      const ticketResponse = await fetch(`${backendUrl}/api/ticket/${ticketId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -171,7 +173,7 @@ export default function SupportTicketDetailPage() {
         formData.append('file', attachment)
       }
 
-      const response = await fetch(`http://localhost:5001/api/support`, {
+      const response = await fetch(`${backendUrl}/api/support`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -188,6 +190,9 @@ export default function SupportTicketDetailPage() {
         if (fileInput) {
           fileInput.value = ''
         }
+        
+        // Show green success toast notification
+        showToast('success', 'Message Sent', 'Your response has been sent successfully')
       } else {
         showToast('error', 'Error', 'Failed to send message')
       }
@@ -309,7 +314,7 @@ export default function SupportTicketDetailPage() {
                                 e.preventDefault()
                                 try {
                                   const token = localStorage.getItem('token')
-                                  const response = await fetch(`http://localhost:5001/api/support/file/${message.filename}`, {
+                                  const response = await fetch(`${backendUrl}/api/support/file/${message.filename}`, {
                                     headers: {
                                       'Authorization': `Bearer ${token}`
                                     }

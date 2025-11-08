@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
 import { useToast } from '@/lib/context/ToastContext'
+import { getBackendUrl } from '@/lib/api'
 
 interface Ticket {
   id: number
@@ -47,6 +48,7 @@ export default function SupportTeamDashboardPage() {
   })
   const router = useRouter()
   const { showToast } = useToast()
+  const backendUrl = getBackendUrl()
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
@@ -69,7 +71,7 @@ export default function SupportTeamDashboardPage() {
   const fetchTickets = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:5001/api/tickets/all', {
+      const response = await fetch(`${backendUrl}/api/tickets/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -97,7 +99,7 @@ export default function SupportTeamDashboardPage() {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/faq/read')
+      const response = await fetch(`${backendUrl}/api/faq/read`)
       if (response.ok) {
         const data = await response.json()
         setFaqs(data)

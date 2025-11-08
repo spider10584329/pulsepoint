@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
 import { useToast } from '@/lib/context/ToastContext'
 import { io, Socket } from 'socket.io-client'
+import { getBackendUrl } from '@/lib/api'
 
 interface Message {
   id: number
@@ -35,21 +36,36 @@ export default function TicketDetailPage() {
   const router = useRouter()
   const { showToast } = useToast()
   const ticketId = params?.id
+  const backendUrl = getBackendUrl()
 
   const [ticket, setTicket] = useState<TicketDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [newMessage, setNewMessage] = useState('')
   const [newFile, setNewFile] = useState<File | null>(null)
   const [isSending, setIsSending] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const socketRef = useRef<Socket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  // Get current user ID from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        setCurrentUserId(user.id)
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+      }
+    }
+  }, [])
 
   // Initialize socket connection and join ticket room
   useEffect(() => {
     if (!ticketId) return
 
     // Connect to socket server
-    const socket = io('http://localhost:5001', {
+    const socket = io(backendUrl, {
       transports: ['websocket', 'polling']
     })
 
@@ -67,8 +83,8 @@ export default function TicketDetailPage() {
 
     socket.on('new_message', (data) => {
       console.log('New message received:', data)
-      // Only update if it's for this ticket
-      if (data.ticket_id === parseInt(ticketId as string)) {
+      // Only update if it's for this ticket AND not from the current user
+      if (data.ticket_id === parseInt(ticketId as string) && data.message.user_id !== currentUserId) {
         // Add the new message to the ticket
         setTicket(prevTicket => {
           if (!prevTicket) return null
@@ -78,7 +94,7 @@ export default function TicketDetailPage() {
           }
         })
         
-        // Show toast notification
+        // Show toast notification for messages from others
         showToast('info', 'New Message', `New message from ${data.message.user.firstname} ${data.message.user.lastname}`)
       }
     })
@@ -94,7 +110,7 @@ export default function TicketDetailPage() {
         socket.disconnect()
       }
     }
-  }, [ticketId, showToast])
+  }, [ticketId, currentUserId, showToast])
 
   useEffect(() => {
     const fetchTicketDetails = async () => {
@@ -106,7 +122,7 @@ export default function TicketDetailPage() {
         const token = localStorage.getItem('token')
         console.log('Token exists:', !!token)
         
-        const response = await fetch(`http://localhost:5001/api/ticket/${ticketId}`, {
+        const response = await fetch(`${backendUrl}/api/ticket/${ticketId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -145,7 +161,7 @@ export default function TicketDetailPage() {
   const refreshTicketDetails = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:5001/api/ticket/${ticketId}`, {
+      const response = await fetch(`${backendUrl}/api/ticket/${ticketId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -181,7 +197,7 @@ export default function TicketDetailPage() {
         formData.append('file', newFile)
       }
 
-      const response = await fetch('http://localhost:5001/api/support', {
+      const response = await fetch(`${backendUrl}/api/support`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -315,7 +331,7 @@ export default function TicketDetailPage() {
                                 e.preventDefault()
                                 try {
                                   const token = localStorage.getItem('token')
-                                  const response = await fetch(`http://localhost:5001/api/support/file/${message.filename}`, {
+                                  const response = await fetch(`${backendUrl}/api/support/file/${message.filename}`, {
                                     headers: {
                                       'Authorization': `Bearer ${token}`
                                     }

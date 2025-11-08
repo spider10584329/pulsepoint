@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@/lib/context/ToastContext'
 import CustomSelect from '@/components/CustomSelect'
+import { getBackendUrl } from '@/lib/api'
 
 interface User {
   id: number
@@ -41,6 +42,7 @@ export default function SubscriptionManagementPanel({
   onStatusUpdate,
   onBack
 }: SubscriptionManagementPanelProps) {
+  const backendUrl = getBackendUrl()
   const [loading, setLoading] = useState(false)
   const [statuses, setStatuses] = useState<{ [userId: number]: number }>({})
   const [subscriptionData, setSubscriptionData] = useState<{ 
@@ -153,7 +155,7 @@ export default function SubscriptionManagementPanel({
           return
         }
 
-        const response = await fetch(`http://localhost:5001/api/apply/project/update?id=${subscriber.id}`, {
+        const response = await fetch(`${backendUrl}/api/apply/project/update?id=${subscriber.id}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
