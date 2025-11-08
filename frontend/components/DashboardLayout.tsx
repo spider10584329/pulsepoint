@@ -88,6 +88,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           { name: 'Dashboard', href: '/admin', icon: '/svg/dashboard.svg' },
           { name: 'Users', href: '/admin/user', icon: '/svg/users.svg' },
           { name: 'Software', href: '/admin/software', icon: '/svg/software.svg' },
+          { name: 'API Key', href: '/admin/apikey', icon: '/svg/key.svg' },
         ]
       case 1: // Regular User
         return [

@@ -3,6 +3,9 @@ from flask_restful import Resource, reqparse
 from flask import request, send_from_directory, make_response
 from flask_jwt_extended import jwt_required
 import os
+import uuid
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 parser = reqparse.RequestParser()
 parser.add_argument('id')
@@ -141,3 +144,147 @@ class PublicProjectList(Resource):
             
         except Exception as e:
             return {'error': str(e), 'message': 'Failed to retrieve project list'}, 500
+
+class GenerateAPIKey(Resource):
+    @jwt_required()
+    def post(self):
+        """
+        Generate an API key and store/update it in database
+        Returns: API key and complete API URL
+        """
+        try:
+            # Generate UUID-based API key
+            api_key = str(uuid.uuid4())
+            
+            # Store or update API key in database
+            from models.apikey import ApiKeyModel
+            ApiKeyModel.create_or_update(api_key)
+            
+            # Return API key and URL
+            api_url = f'/api/pulsepoint/subscription?apikey={api_key}'
+            
+            return {
+                'status': 1,
+                'apiKey': api_key,
+                'apiUrl': api_url
+            }, 200
+            
+        except Exception as e:
+            return {'error': str(e), 'message': 'Failed to generate API key'}, 500
+
+class GetCurrentAPIKey(Resource):
+    @jwt_required()
+    def get(self):
+        """
+        Get the current/latest API key from the database
+        Returns: API key and complete API URL if exists
+        """
+        try:
+            from models.apikey import ApiKeyModel
+            api_record = ApiKeyModel.get_latest()
+            
+            if not api_record:
+                return {'apiKey': '', 'apiUrl': ''}, 200
+            
+            # Return API key and URL
+            api_url = f'/api/pulsepoint/subscription?apikey={api_record.apikey}'
+            
+            return {
+                'apiKey': api_record.apikey,
+                'apiUrl': api_url
+            }, 200
+            
+        except Exception as e:
+            return {'error': str(e), 'message': 'Failed to retrieve API key'}, 500
+
+class GetSubscriptionData(Resource):
+    def get(self):
+        """
+        Public API endpoint to retrieve subscription data using API key
+        Returns: List of approved subscriptions with user and project details
+        No JWT required - uses API key for authentication
+        """
+        try:
+            api_key = request.args.get('apikey')
+            
+            if not api_key:
+                return {'error': 'API key is required'}, 400
+            
+            # Validate API key
+            from models.apikey import ApiKeyModel
+            api_record = ApiKeyModel.find_by_api_key(api_key)
+            
+            if not api_record:
+                return {'error': 'Invalid API key'}, 401
+            
+            # Query all approved subscriptions (is_apply = 1)
+            # Exclude free trial users (period = 0 or purchase_date is empty)
+            from start import db
+            from models.appliedproject import AppliedProjectModel
+            from models.user import UserModel
+            
+            query_result = db.session.query(
+                UserModel.id.label('customerID'),
+                UserModel.email.label('customerEmail'),
+                ProjectModel.id.label('softwareID'),
+                ProjectModel.name.label('softwareName'),
+                AppliedProjectModel.purchase_date,
+                AppliedProjectModel.periodicity,
+                ProjectModel.mprice,
+                ProjectModel.price
+            ).join(UserModel, UserModel.id == AppliedProjectModel.user_id) \
+             .join(ProjectModel, ProjectModel.id == AppliedProjectModel.project_id) \
+             .filter(AppliedProjectModel.is_apply == 1) \
+             .filter(AppliedProjectModel.periodicity > 0) \
+             .filter(AppliedProjectModel.purchase_date != '') \
+             .filter(AppliedProjectModel.purchase_date.isnot(None)) \
+             .all()
+            
+            # Transform data to required format
+            subscriptions = []
+            for record in query_result:
+                # Calculate expiration date
+                purchase_date_str = record.purchase_date
+                periodicity = record.periodicity
+                expiration_date = ''
+                
+                if purchase_date_str and periodicity:
+                    try:
+                        # Parse purchase date (handle both date and datetime formats)
+                        if ' ' in purchase_date_str:
+                            # If it contains time, parse datetime
+                            purchase_date_obj = datetime.strptime(purchase_date_str, '%Y-%m-%d %H:%M:%S')
+                        else:
+                            # If it's just date
+                            purchase_date_obj = datetime.strptime(purchase_date_str, '%Y-%m-%d')
+                        
+                        # Add months to get expiration date
+                        expiration_date_obj = purchase_date_obj + relativedelta(months=int(periodicity))
+                        expiration_date = expiration_date_obj.strftime('%Y-%m-%d')
+                    except Exception as e:
+                        expiration_date = ''
+                
+                # Calculate payment price based on period
+                # If period = 12 (annual), use annual price
+                # Otherwise, use monthly price * period
+                if periodicity == 12:
+                    payment_price = float(record.price) if record.price else 0
+                else:
+                    payment_price = float(record.mprice) * int(periodicity) if record.mprice else 0
+                
+                subscription_data = {
+                    'customerID': record.customerID,
+                    'customerEmail': record.customerEmail,
+                    'softwareID': record.softwareID,
+                    'softwareName': record.softwareName,
+                    'purchaseDate': purchase_date_str.split(' ')[0] if ' ' in purchase_date_str else purchase_date_str,
+                    'period': record.periodicity if record.periodicity else 0,
+                    'paymentPrice': payment_price,
+                    'expirationDate': expiration_date
+                }
+                subscriptions.append(subscription_data)
+            
+            return subscriptions, 200
+            
+        except Exception as e:
+            return {'error': str(e), 'message': 'Failed to retrieve subscription data'}, 500
