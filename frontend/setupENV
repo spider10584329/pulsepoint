@@ -1,0 +1,2 @@
+# Backend API URL (base URL without /api suffix)
+NEXT_PUBLIC_API_URL=http://localhost:5001
