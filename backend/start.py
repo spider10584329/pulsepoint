@@ -6,6 +6,10 @@ from flask_basicauth import BasicAuth
 from flask_mail import Mail
 from flask_socketio import SocketIO, emit
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 socketio = SocketIO(app,cors_allowed_origins='*')
