@@ -429,17 +429,6 @@ export default function HomePage() {
                 </div>
               )}
 
-              <div className="mt-6 ">
-                {isLogin ? (
-                  <button 
-                    onClick={() => setIsLogin(false)} 
-                    className="text-gray-700 hover:text-black text-sm font-medium"
-                  >
-                    Forgot password ?
-                  </button>
-                ) : null}
-              </div>
-
               <div className="mt-1 ">
                 <p className="text-gray-600 text-sm">
                   {isLogin ? "Don't have an account? " : "Already have an account? "}

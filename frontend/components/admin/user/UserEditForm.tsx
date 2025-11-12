@@ -126,7 +126,16 @@ export default function UserEditForm({ editingUser, onSave, onChange, onCancel }
                   { value: 1, label: 'Verified' }
                 ]}
                 value={editingUser.isVerify}
-                onChange={(value) => onChange({...editingUser, isVerify: Number(value)})}
+                onChange={(value) => {
+                  const numValue = Number(value)
+                  // When verification status changes, also update the status field
+                  // Verified (1) sets status to 1, Not Verified (0) sets status to 0
+                  onChange({
+                    ...editingUser, 
+                    isVerify: numValue,
+                    status: numValue
+                  })
+                }}
                 placeholder="Select Verification Status"
               />
             </div>
