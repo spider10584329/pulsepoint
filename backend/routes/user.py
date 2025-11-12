@@ -10,6 +10,7 @@ def userRouteIndex(app):
     api.add_resource(userResource.AllUsers, '/api/user/allusers')
     api.add_resource(userResource.UpdateUser, '/api/user/update')
     api.add_resource(userResource.UpdateUserDetails, '/api/user/update/details')
+    api.add_resource(userResource.UpdateProfile, '/api/user/update-profile')
     api.add_resource(userResource.DeleteUser, '/api/user/delete')
     api.add_resource(userResource.UserLoginWithProject, '/api/user/project/signin')
     api.add_resource(userResource.SendForgetPasswordMail, '/api/user/forgot/password')

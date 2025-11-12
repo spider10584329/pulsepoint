@@ -11,6 +11,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -72,6 +73,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     // Cleanup
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.user-dropdown')) {
+        setDropdownOpen(false)
+      }
+    }
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [dropdownOpen])
 
   const handleLogout = () => {
     // Clear localStorage
@@ -152,22 +171,71 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
             </div>
             <div className="ml-4 flex items-center md:ml-2">
-              <div className="ml-3 relative">
+              <div className="ml-3 relative user-dropdown">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium text-gray-700 mr-1">
-                    {user?.firstname} {user?.lastname}
-                  </span>
                   <button
-                    onClick={handleLogout}
-                    className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 "
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none transition-colors bg-white px-3 py-0 "
                   >
                     <img 
-                      src="/svg/logout.svg" 
-                      alt="Logout" 
-                      className="h-6 w-6 opacity-80 hover:opacity-100"
+                      src="/svg/user-default.svg" 
+                      alt="User" 
+                      className="h-10 w-10 mr-2 opacity-80"
                     />
+                    <span className="mr-2">
+                      {(user?.firstname?.charAt(0) || '').toUpperCase()}{(user?.lastname?.charAt(0) || '').toUpperCase()}
+                    </span>
+                    <svg 
+                      className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
                 </div>
+
+                {/* Dropdown Menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        // Navigate to profile page based on user role
+                        if (user?.role === 0) {
+                          router.push('/admin/profile')
+                        } else if (user?.role === 1) {
+                          router.push('/user/profile')
+                        } else if (user?.role === 2) {
+                          router.push('/supportTeam/profile')
+                        }
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <img 
+                        src="/svg/user-account.svg" 
+                        alt="User Profile" 
+                        className="h-6 w-6 mr-3 opacity-80"
+                      />
+                      <span>User Profile</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        handleLogout()
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <img 
+                        src="/svg/logout.svg" 
+                        alt="Logout" 
+                        className="h-5 w-5 mr-3 opacity-80"
+                      />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

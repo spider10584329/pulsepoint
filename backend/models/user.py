@@ -135,7 +135,7 @@ class UserModel(db.Model):
             UserModel.status,
             UserModel.role,
             UserModel.isVerify
-        ).filter(UserModel.role == 1)
+        ).all()
 
         return list(map(lambda x: to_json(x), query_result))
 
@@ -189,7 +189,7 @@ class UserModel(db.Model):
             return {'message': 'error'}
     
     @classmethod
-    def update_user_details(cls, id, email, firstname, lastname, company, hotelname, role, status, isVerify):
+    def update_user_details(cls, id, email, firstname, lastname, company, hotelname, role, status, isVerify, password=None):
         try:
             record = cls.query.get(id)
             if not record:
@@ -203,6 +203,12 @@ class UserModel(db.Model):
             record.role = role
             record.status = status
             record.isVerify = isVerify
+            
+            # Update password only if provided
+            if password:
+                from common.password import generate_hash
+                record.password = generate_hash(password)
+            
             db.session.commit()
             
             return {'status': 1, 'message': 'User updated successfully'}
@@ -239,3 +245,30 @@ class UserModel(db.Model):
             db.session.commit()
         except:
             return {'message': 'error'}
+
+    @classmethod
+    def update_user_profile(cls, id, company, hotelname, firstname, lastname, email, phonenumber, address, contact, password_hash=None):
+        try:
+            record = cls.query.get(id)
+            if not record:
+                return {'status': -1, 'message': 'User not found'}
+            
+            record.company = company
+            record.hotelname = hotelname
+            record.firstname = firstname
+            record.lastname = lastname
+            record.email = email
+            record.phonenumber = phonenumber
+            record.address = address
+            record.contact = contact
+            
+            # Update password only if provided
+            if password_hash:
+                record.password = password_hash
+            
+            db.session.commit()
+            
+            return {'status': 1, 'message': 'Profile updated successfully'}
+        except Exception as e:
+            db.session.rollback()
+            return {'status': -1, 'message': f'Error updating profile: {str(e)}'}

@@ -11,6 +11,16 @@ Route_index(app)
 def index():
     return "hello world"
 
+@app.route("/debug/db")
+def debug_db():
+    return {
+        "db_id": id(db),
+        "app_db": id(current_app.extensions['sqlalchemy']),
+        "is_same_instance": id(db) == id(current_app.extensions['sqlalchemy']),
+        "db_repr": repr(db)
+    }
+    
+    
 # Socket.IO event handlers for ticket conversations
 @socketio.on('join_ticket')
 def handle_join_ticket(data):
@@ -45,8 +55,7 @@ def handle_disconnect():
 
 if (__name__ == "__main__"):
     # For HTTPS, uncomment these lines and add cert.pem and key.pem files:
-    # socketio.run(app, host='localhost', port=5001, debug=True, use_reloader=False, 
-    #              certfile='cert.pem', keyfile='key.pem')
+    #socketio.run(app, host='localhost', port=5001, debug=True, use_reloader=False, certfile='cert.pem', keyfile='key.pem')
     
     # For HTTP (default):
     socketio.run(app, host='localhost', port=5001, debug=True, use_reloader=False)

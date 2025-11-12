@@ -33,6 +33,7 @@ interface UserListProps {
   isLoading: boolean
   onUserClick: (userId: number) => void
   onUserAction: (userId: number, action: 'edit' | 'delete') => void
+
 }
 
 export default function UserList({ 
@@ -42,7 +43,8 @@ export default function UserList({
   actionLoading, 
   isLoading,
   onUserClick, 
-  onUserAction 
+  onUserAction,
+  
 }: UserListProps) {
   const getUserProjectStats = (userId: number) => {
     const userProjects = appliedProjects.filter(project => project.userId === userId)
@@ -78,8 +80,6 @@ export default function UserList({
 
   return (
     <div className="overflow-hidden flex flex-col">
-      <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">User List</h2>
-      
       <div className="flex-1 overflow-auto">
         {isLoading ? (
           <div className="flex justify-center items-center h-32 sm:h-40">
@@ -100,15 +100,19 @@ export default function UserList({
           <div className="space-y-2 sm:space-y-3">
             {users.map((userData) => {
               const stats = getUserProjectStats(userData.id)
+              const isRegularUser = userData.role === 1
+              
               return (
                 <div 
                   key={userData.id} 
-                  className={`border border-gray-200 rounded-lg px-3 py-1 sm:px-4 sm:py-1 cursor-pointer transition-colors ${
+                  className={`border border-gray-200 rounded-lg px-3 py-1 sm:px-4 sm:py-1 transition-colors ${
+                    isRegularUser ? 'cursor-pointer' : 'cursor-default'
+                  } ${
                     selectedUserId === userData.id 
                       ? 'bg-gray-100 border-gray-300' 
-                      : 'hover:bg-gray-50'
+                      : isRegularUser ? 'hover:bg-gray-50' : ''
                   }`}
-                  onClick={() => onUserClick(userData.id)}
+                  onClick={() => isRegularUser && onUserClick(userData.id)}
                 >
                   {/* Mobile Layout */}
                   <div className="flex flex-col space-y-2 sm:hidden">
@@ -152,24 +156,27 @@ export default function UserList({
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {/* Pending Approval */}
-                      <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {stats.pendingApproval}
+                    {/* Only show badges for regular users, not support team members */}
+                    {isRegularUser && (
+                      <div className="flex flex-wrap gap-1">
+                        {/* Pending Approval */}
+                        <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {stats.pendingApproval}
+                        </div>
+                        {/* Free Trial */}
+                        <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {stats.freeTrial}
+                        </div>
+                        {/* Active Paid */}
+                        <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {stats.activePaid}
+                        </div>
+                        {/* Expired */}
+                        <div className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {stats.expired}
+                        </div>
                       </div>
-                      {/* Free Trial */}
-                      <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {stats.freeTrial}
-                      </div>
-                      {/* Active Paid */}
-                      <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {stats.activePaid}
-                      </div>
-                      {/* Expired */}
-                      <div className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {stats.expired}
-                      </div>
-                    </div>
+                    )}
                   </div>
                   
                   {/* Desktop Layout */}
@@ -178,24 +185,27 @@ export default function UserList({
                       <h3 className="text-sm text-gray-900 truncate">{userData.email}</h3>
                     </div>
                     <div className="flex items-center space-x-3 flex-shrink-0">
-                      <div className="flex space-x-2">
-                        {/* Pending Approval */}
-                        <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
-                          {stats.pendingApproval}
+                      {/* Only show badges for regular users, not support team members */}
+                      {isRegularUser && (
+                        <div className="flex space-x-2">
+                          {/* Pending Approval */}
+                          <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                            {stats.pendingApproval}
+                          </div>
+                          {/* Free Trial */}
+                          <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                            {stats.freeTrial}
+                          </div>
+                          {/* Active Paid */}
+                          <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                            {stats.activePaid}
+                          </div>
+                          {/* Expired */}
+                          <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
+                            {stats.expired}
+                          </div>
                         </div>
-                        {/* Free Trial */}
-                        <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                          {stats.freeTrial}
-                        </div>
-                        {/* Active Paid */}
-                        <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                          {stats.activePaid}
-                        </div>
-                        {/* Expired */}
-                        <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
-                          {stats.expired}
-                        </div>
-                      </div>
+                      )}
                       <div className="flex space-x-2">
                         {/* Edit Button */}
                         <button

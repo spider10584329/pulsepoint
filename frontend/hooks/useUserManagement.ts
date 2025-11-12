@@ -208,7 +208,7 @@ export const useUserManagement = () => {
     setConfirmDialog(prev => ({ ...prev, isOpen: false }))
   }
 
-  const handleSaveUser = async (updatedUser: User) => {
+  const handleSaveUser = async (updatedUser: User, password?: string) => {
     try {
       const token = localStorage.getItem('token')
       if (!token) {
@@ -217,7 +217,7 @@ export const useUserManagement = () => {
       }
       
       // Create JSON data for the API request
-      const requestData = {
+      const requestData: any = {
         email: updatedUser.email,
         firstname: updatedUser.firstname,
         lastname: updatedUser.lastname,
@@ -226,6 +226,11 @@ export const useUserManagement = () => {
         role: updatedUser.role.toString(),
         status: updatedUser.status.toString(),
         isVerify: updatedUser.isVerify.toString()
+      }
+      
+      // Add password to request if provided
+      if (password) {
+        requestData.password = password
       }
       
       const response = await fetch(`${backendUrl}/api/user/update/details?id=${updatedUser.id}`, {
@@ -248,7 +253,7 @@ export const useUserManagement = () => {
           if (token) {
             await fetchUsers(token)
           }
-          showToast('success', 'User Updated', 'User information has been updated successfully!')
+          showToast('success', 'User Updated', password ? 'User information and password have been updated successfully!' : 'User information has been updated successfully!')
         } else {
           showToast('error', 'Update Failed', result.message || 'Failed to update user information.')
         }

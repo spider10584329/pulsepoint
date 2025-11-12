@@ -253,6 +253,9 @@ class UpdateUserDetails(Resource):
             data = parser.parse_args()
         user_id = request.args.get('id')
         
+        # Check if password is provided
+        password = data.get('password', None)
+        
         return UserModel.update_user_details(
             user_id,
             data['email'],
@@ -262,13 +265,73 @@ class UpdateUserDetails(Resource):
             data['hotelname'],
             int(data['role']),
             int(data['status']),
-            int(data['isVerify'])
+            int(data['isVerify']),
+            password
         )
     
 class DeleteUser(Resource):
     @jwt_required()
     def delete(self):
         return UserModel.delete_one(request.args.get('id'))
+    
+class UpdateProfile(Resource):
+    @jwt_required()
+    def put(self):
+        # Handle JSON data
+        data = request.get_json()
+        
+        # Get current user from JWT token
+        from flask_jwt_extended import get_jwt_identity
+        email = get_jwt_identity()
+        current_user = UserModel.find_by_email(email)
+        
+        print(f"UpdateProfile - Email from JWT: {email}")
+        print(f"UpdateProfile - Current user: {current_user}")
+        print(f"UpdateProfile - Request data: {data}")
+        
+        if not current_user:
+            return {'message': 'User not found', 'status': 0}, 404
+        
+        # If password change is requested, verify current password
+        if 'password' in data and data.get('password'):
+            current_password = data.get('currentPassword')
+            if not current_password:
+                return {'message': 'Current password is required', 'status': 0}, 400
+            
+            if not verify_password(current_password, current_user["password"]):
+                return {'message': 'Current password is incorrect', 'status': 0}, 400
+            
+            # Update with new password
+            new_password_hash = generate_hash(data['password'])
+        else:
+            # Keep existing password
+            new_password_hash = None
+        
+        try:
+            # Update user information
+            result = UserModel.update_user_profile(
+                current_user["id"],
+                data.get('company', current_user["company"]),
+                data.get('hotelname', current_user["hotelname"]),
+                data.get('firstname', current_user["firstname"]),
+                data.get('lastname', current_user["lastname"]),
+                data.get('email', current_user["email"]),
+                data.get('phonenumber', current_user["phonenumber"]),
+                data.get('address', current_user["address"]),
+                data.get('contact', current_user["contact"]),
+                new_password_hash
+            )
+            
+            if result['status'] == 1:
+                return {'message': 'Profile updated successfully', 'status': 1}, 200
+            else:
+                print(f"UpdateProfile - Error from model: {result}")
+                return {'message': result.get('message', 'Failed to update profile'), 'status': 0}, 500
+        except Exception as e:
+            print(f"UpdateProfile - Exception: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return {'message': str(e), 'status': 0}, 500
     
 class SendForgetPasswordMail(Resource):
     def post(self):

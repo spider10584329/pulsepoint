@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import CustomSelect from '../../CustomSelect'
 
 interface User {
@@ -16,15 +17,17 @@ interface User {
 
 interface UserEditFormProps {
   editingUser: User
-  onSave: (user: User) => void
+  onSave: (user: User, password?: string) => void
   onChange: (user: User) => void
   onCancel: () => void
 }
 
 export default function UserEditForm({ editingUser, onSave, onChange, onCancel }: UserEditFormProps) {
+  const [password, setPassword] = useState('')
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave(editingUser)
+    onSave(editingUser, password || undefined)
   }
 
   return (
@@ -52,7 +55,7 @@ export default function UserEditForm({ editingUser, onSave, onChange, onCancel }
               type="email"
               value={editingUser.email}
               onChange={(e) => onChange({...editingUser, email: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500 text-sm"
               required
             />
           </div>
@@ -64,7 +67,7 @@ export default function UserEditForm({ editingUser, onSave, onChange, onCancel }
                 type="text"
                 value={editingUser.firstname}
                 onChange={(e) => onChange({...editingUser, firstname: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500 text-sm"
                 required
               />
             </div>
@@ -75,7 +78,7 @@ export default function UserEditForm({ editingUser, onSave, onChange, onCancel }
                 type="text"
                 value={editingUser.lastname}
                 onChange={(e) => onChange({...editingUser, lastname: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500 text-sm"
                 required
               />
             </div>
@@ -87,7 +90,7 @@ export default function UserEditForm({ editingUser, onSave, onChange, onCancel }
               type="text"
               value={editingUser.company}
               onChange={(e) => onChange({...editingUser, company: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500 text-sm"
             />
           </div>
           
@@ -97,35 +100,53 @@ export default function UserEditForm({ editingUser, onSave, onChange, onCancel }
               type="text"
               value={editingUser.hotelname}
               onChange={(e) => onChange({...editingUser, hotelname: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500 text-sm"
             />
           </div>
-          
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Role</label>
-            <CustomSelect
-              options={[
-                { value: 0, label: 'Admin' },
-                { value: 1, label: 'User' },
-                { value: 2, label: 'Support' }
-              ]}
-              value={editingUser.role}
-              onChange={(value) => onChange({...editingUser, role: Number(value)})}
-              placeholder="Select Role"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Role</label>
+              <CustomSelect
+                options={[
+                  { value: 0, label: 'Admin' },
+                  { value: 1, label: 'User' },
+                  { value: 2, label: 'Support' }
+                ]}
+                value={editingUser.role}
+                onChange={(value) => onChange({...editingUser, role: Number(value)})}
+                placeholder="Select Role"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Verification Status</label>
+              <CustomSelect
+                options={[
+                  { value: 0, label: 'Not Verified' },
+                  { value: 1, label: 'Verified' }
+                ]}
+                value={editingUser.isVerify}
+                onChange={(value) => onChange({...editingUser, isVerify: Number(value)})}
+                placeholder="Select Verification Status"
+              />
+            </div>
           </div>
           
+          
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Verification Status</label>
-            <CustomSelect
-              options={[
-                { value: 0, label: 'Not Verified' },
-                { value: 1, label: 'Verified' }
-              ]}
-              value={editingUser.isVerify}
-              onChange={(value) => onChange({...editingUser, isVerify: Number(value)})}
-              placeholder="Select Verification Status"
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              Change Password <span className="text-gray-500 font-normal">(Optional)</span>
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500 text-sm"
+              placeholder="Leave empty to keep current password"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Only fill this field if you want to change the user's password
+            </p>
           </div>
           
           <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6 pt-4 border-t border-gray-200 sticky bottom-0 bg-white -mx-1 px-1 sm:mx-0 sm:px-0">
