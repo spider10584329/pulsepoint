@@ -5,9 +5,15 @@ from flask_migrate import Migrate
 from flask_basicauth import BasicAuth
 from flask_mail import Mail
 from flask_socketio import SocketIO, emit
+import os
 
 app = Flask(__name__)
 socketio = SocketIO(app,cors_allowed_origins='*')
+
+# Public API Base URL - Set this to your domain when deployed
+# For local development, it will use request.host_url automatically
+# For production, set the PUBLIC_API_URL environment variable
+app.config['PUBLIC_API_URL'] = os.environ.get('PUBLIC_API_URL', None)
 
 # email
 app.config['MAIL_SERVER'] = "mail.ncmail.nc"

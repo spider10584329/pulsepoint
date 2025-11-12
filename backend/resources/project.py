@@ -162,8 +162,17 @@ class GenerateAPIKey(Resource):
             from models.apikey import ApiKeyModel
             ApiKeyModel.create_or_update(api_key)
             
-            # Return API key and URL
-            api_url = f'/api/pulsepoint/subscription?apikey={api_key}'
+            # Get the base URL
+            from start import app
+            # If PUBLIC_API_URL is configured in environment, use it
+            # Otherwise, use the request's host URL (for local development)
+            if app.config.get('PUBLIC_API_URL'):
+                base_url = app.config['PUBLIC_API_URL'].rstrip('/')
+            else:
+                base_url = request.host_url.rstrip('/')
+            
+            # Return complete API URL with backend URL
+            api_url = f'{base_url}/api/pulsepoint/subscription?apikey={api_key}'
             
             return {
                 'status': 1,
@@ -188,8 +197,17 @@ class GetCurrentAPIKey(Resource):
             if not api_record:
                 return {'apiKey': '', 'apiUrl': ''}, 200
             
-            # Return API key and URL
-            api_url = f'/api/pulsepoint/subscription?apikey={api_record.apikey}'
+            # Get the base URL
+            from start import app
+            # If PUBLIC_API_URL is configured in environment, use it
+            # Otherwise, use the request's host URL (for local development)
+            if app.config.get('PUBLIC_API_URL'):
+                base_url = app.config['PUBLIC_API_URL'].rstrip('/')
+            else:
+                base_url = request.host_url.rstrip('/')
+            
+            # Return complete API URL with backend URL
+            api_url = f'{base_url}/api/pulsepoint/subscription?apikey={api_record.apikey}'
             
             return {
                 'apiKey': api_record.apikey,
