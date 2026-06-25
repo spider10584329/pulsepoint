@@ -23,8 +23,8 @@ app.config['PUBLIC_API_URL'] = os.environ.get('PUBLIC_API_URL', None)
 app.config['MAIL_SERVER'] = "mail.ncmail.nc"
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = "bqs-clinotag@square.nc"
-app.config['MAIL_PASSWORD'] = "58Tfrg$/4K"
+app.config['MAIL_USERNAME'] = "noreply@clinotag.com"
+app.config['MAIL_PASSWORD'] = "Mention+Dissuader91*"
 
 mail = Mail(app)
 

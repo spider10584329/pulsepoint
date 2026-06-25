@@ -184,6 +184,7 @@ class UserModel(db.Model):
         try:
             record = cls.query.get(id)
             record.isVerify = 1
+            record.status = 1  # Set status to 1 when account is verified
             db.session.commit()
         except:
             return {'message': 'error'}

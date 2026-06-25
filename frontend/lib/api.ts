@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Get the base backend URL from environment variable
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api.pulsepoint.clinotag.com'
 
 // Helper function to get the full backend URL
 export const getBackendUrl = () => BACKEND_URL
