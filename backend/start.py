@@ -39,7 +39,7 @@ jwt = JWTManager(app)
 
 # connect to the MySql
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:''@localhost:3306/pulsepoint'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://node_svc:Defender-payment-separate@localhost:3306/pulsepoint_prod'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://node_svc:Defender-payment-separate@localhost:3306/pulsepoint'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
